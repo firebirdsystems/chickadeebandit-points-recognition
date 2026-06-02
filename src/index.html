@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <base href="/run/points-recognition/" />
+  <title>Points & Recognition</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--hub-font, system-ui, sans-serif);
+      font-size: var(--hub-font-size, 15px);
+      background: var(--hub-bg, #f9fafb);
+      color: var(--hub-text, #111827);
+      min-height: 100vh;
+    }
+
+    .app-header {
+      padding: 16px 20px 0;
+    }
+    .app-title { font-size: 1.25rem; font-weight: 700; }
+
+    .tab-nav {
+      display: flex;
+      border-bottom: 1px solid var(--hub-border, #e5e7eb);
+      padding: 0 20px;
+      margin-top: 12px;
+    }
+    .tab-nav button {
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 8px 14px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      color: var(--hub-text-muted, #6b7280);
+      transition: color .15s, border-color .15s;
+      margin-bottom: -1px;
+    }
+    .tab-nav button.active {
+      color: var(--hub-primary, #6366f1);
+      border-bottom-color: var(--hub-primary, #6366f1);
+    }
+
+    .view { display: none; padding: 20px; }
+    .view.active { display: block; }
+
+    .card {
+      background: var(--hub-surface, #fff);
+      border: 1px solid var(--hub-border, #e5e7eb);
+      border-radius: var(--hub-radius, 8px);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--hub-text-muted, #6b7280);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: 14px;
+    }
+
+    .controls-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .controls-row select {
+      flex: 1;
+      min-width: 120px;
+      padding: 7px 10px;
+      border: 1px solid var(--hub-border, #e5e7eb);
+      border-radius: var(--hub-radius, 6px);
+      background: var(--hub-surface, #fff);
+      color: var(--hub-text, #111827);
+      font-size: 0.9rem;
+      font-family: inherit;
+    }
+
+    .member-avatar {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.85rem; font-weight: 700; color: #fff;
+      flex-shrink: 0;
+    }
+    .member-avatar.sm { width: 26px; height: 26px; font-size: 0.72rem; }
+
+    .lb-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--hub-border, #e5e7eb);
+    }
+    .lb-row:last-child { border-bottom: none; }
+    .lb-rank { font-size: 1.2rem; width: 28px; text-align: center; flex-shrink: 0; }
+    .lb-name { font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lb-points { font-weight: 700; font-size: 1.05rem; color: var(--hub-primary, #6366f1); white-space: nowrap; }
+    .lb-pts-label { font-size: 0.75rem; color: var(--hub-text-muted, #6b7280); margin-left: 2px; }
+
+    /* My Points */
+    .summary-stat {
+      text-align: center;
+      padding: 8px 0 4px;
+    }
+    .summary-stat .stat-number {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--hub-primary, #6366f1);
+      line-height: 1;
+    }
+    .summary-stat .stat-label {
+      font-size: 0.85rem;
+      color: var(--hub-text-muted, #6b7280);
+      margin-top: 4px;
+    }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--hub-border, #e5e7eb);
+      border-radius: var(--hub-radius, 8px);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .summary-cell {
+      background: var(--hub-surface, #fff);
+      padding: 16px;
+      text-align: center;
+    }
+    .summary-cell .val { font-size: 1.8rem; font-weight: 800; color: var(--hub-primary, #6366f1); }
+    .summary-cell .lbl { font-size: 0.8rem; color: var(--hub-text-muted, #6b7280); margin-top: 2px; }
+
+    .award-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--hub-border, #e5e7eb);
+    }
+    .award-row:last-child { border-bottom: none; }
+    .award-icon { font-size: 1.4rem; flex-shrink: 0; width: 28px; text-align: center; margin-top: 2px; }
+    .award-body { flex: 1; min-width: 0; }
+    .award-cat { font-weight: 600; font-size: 0.9rem; }
+    .award-meta { font-size: 0.8rem; color: var(--hub-text-muted, #6b7280); margin-top: 2px; }
+    .award-note { font-size: 0.85rem; color: var(--hub-text-muted, #6b7280); margin-top: 3px; font-style: italic; }
+    .award-points { font-weight: 700; color: var(--hub-primary, #6366f1); font-size: 1rem; white-space: nowrap; }
+
+    /* Admin */
+    .admin-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .admin-section-header .card-title { margin-bottom: 0; }
+
+    .cat-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--hub-border, #e5e7eb);
+    }
+    .cat-row:last-child { border-bottom: none; }
+    .cat-icon { font-size: 1.2rem; width: 28px; text-align: center; flex-shrink: 0; }
+    .cat-name { flex: 1; font-weight: 500; }
+    .cat-actions { display: flex; gap: 4px; }
+
+    .period-card-active {
+      background: color-mix(in srgb, var(--hub-primary, #6366f1) 6%, transparent);
+      border: 1px solid color-mix(in srgb, var(--hub-primary, #6366f1) 25%, transparent);
+      border-radius: var(--hub-radius, 8px);
+      padding: 14px 16px;
+      margin-bottom: 12px;
+    }
+    .period-name { font-weight: 700; font-size: 1rem; margin-bottom: 2px; }
+    .period-meta { font-size: 0.8rem; color: var(--hub-text-muted, #6b7280); }
+    .period-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+
+    .past-period-row {
+      padding: 8px 0;
+      border-bottom: 1px solid var(--hub-border, #e5e7eb);
+    }
+    .past-period-row:last-child { border-bottom: none; }
+    .past-period-name { font-weight: 600; font-size: 0.9rem; }
+    .past-period-meta { font-size: 0.8rem; color: var(--hub-text-muted, #6b7280); margin-top: 2px; }
+
+    .no-period-cta {
+      text-align: center;
+      padding: 20px;
+    }
+    .no-period-cta p { font-size: 0.9rem; color: var(--hub-text-muted, #6b7280); margin-bottom: 14px; }
+
+    /* Buttons */
+    .btn-primary {
+      background: var(--hub-primary, #6366f1);
+      color: var(--hub-primary-fg, #fff);
+      border: none;
+      border-radius: var(--hub-radius, 6px);
+      padding: 10px 20px;
+      font-size: 1rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      width: 100%;
+      transition: background .15s;
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--hub-primary-hover, #4f46e5); }
+    .btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+
+    .btn-secondary {
+      background: var(--hub-surface, #fff);
+      color: var(--hub-text, #111827);
+      border: 1px solid var(--hub-border, #e5e7eb);
+      border-radius: var(--hub-radius, 6px);
+      padding: 8px 14px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-secondary:hover { background: var(--hub-bg, #f9fafb); }
+
+    .btn-small {
+      background: none;
+      border: 1px solid var(--hub-border, #e5e7eb);
+      border-radius: var(--hub-radius, 5px);
+      padding: 4px 10px;
+      font-size: 0.8rem;
+      font-family: inherit;
+      cursor: pointer;
+      color: var(--hub-text, #111827);
+      transition: background .15s;
+    }
+    .btn-small:hover { background: var(--hub-bg, #f9fafb); }
+    .btn-small.danger { color: #ef4444; border-color: #fecaca; }
+    .btn-small.danger:hover { background: #fef2f2; }
+
+    /* Forms */
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-weight: 500; margin-bottom: 6px; font-size: 0.9rem; }
+    .form-group input[type="text"],
+    .form-group input[type="number"],
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--hub-border, #e5e7eb);
+      border-radius: var(--hub-radius, 6px);
+      background: var(--hub-bg, #f9fafb);
+      color: var(--hub-text, #111827);
+      font-size: inherit;
+      font-family: inherit;
+    }
+    .form-group textarea { resize: vertical; min-height: 60px; }
+    .form-hint { font-size: 0.78rem; color: var(--hub-text-muted, #6b7280); margin-top: 4px; }
+
+    /* Emoji grid */
+    .emoji-grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 4px;
+      margin-bottom: 12px;
+    }
+    .emoji-btn {
+      font-size: 1.3rem;
+      background: none;
+      border: 1.5px solid transparent;
+      border-radius: 6px;
+      cursor: pointer;
+      padding: 4px;
+      transition: border-color .1s, background .1s;
+      aspect-ratio: 1;
+    }
+    .emoji-btn:hover { background: var(--hub-bg, #f9fafb); }
+    .emoji-btn.selected { border-color: var(--hub-primary, #6366f1); background: color-mix(in srgb, var(--hub-primary, #6366f1) 8%, transparent); }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.35);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal {
+      background: var(--hub-surface, #fff);
+      border-radius: var(--hub-radius, 10px);
+      padding: 24px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.2);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 20px; }
+    .modal-actions { display: flex; gap: 8px; margin-top: 20px; }
+    .modal-actions .btn-secondary { flex: 0 0 auto; }
+    .modal-actions .btn-primary { flex: 1; }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 32px 20px;
+      color: var(--hub-text-muted, #6b7280);
+    }
+    .empty-state .empty-icon { font-size: 2.2rem; margin-bottom: 8px; }
+    .empty-state p { font-size: 0.9rem; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #111827;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 99px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      opacity: 0;
+      transition: opacity .2s;
+      pointer-events: none;
+      z-index: 200;
+      white-space: nowrap;
+    }
+    .toast.visible { opacity: 1; }
+  </style>
+</head>
+<body>
+
+<div class="app-header">
+  <h1 class="app-title">⭐ Points &amp; Recognition</h1>
+</div>
+
+<nav class="tab-nav">
+  <button class="active" onclick="switchTab('leaderboard')">Leaderboard</button>
+  <button onclick="switchTab('mypoints')">My Points</button>
+  <button id="admin-tab-btn" style="display:none" onclick="switchTab('admin')">Admin</button>
+</nav>
+
+<!-- ── Leaderboard tab ── -->
+<div id="view-leaderboard" class="view active">
+  <div class="controls-row">
+    <select id="period-select" onchange="onPeriodChange()"></select>
+    <select id="category-select" onchange="renderLeaderboard()">
+      <option value="">All Categories</option>
+    </select>
+  </div>
+  <div class="card" id="leaderboard-card">
+    <div id="leaderboard-list">
+      <div class="empty-state"><div class="empty-icon">⭐</div><p>Loading…</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── My Points tab ── -->
+<div id="view-mypoints" class="view">
+  <div id="mypoints-content"></div>
+</div>
+
+<!-- ── Admin tab ── -->
+<div id="view-admin" class="view">
+  <div class="card">
+    <div class="card-title">Award Points</div>
+    <button class="btn-primary" onclick="openAwardModal()">+ Award Points to a Member</button>
+  </div>
+  <div class="card">
+    <div class="admin-section-header">
+      <div class="card-title">Categories</div>
+      <button class="btn-small" onclick="openCategoryModal(null)">+ Add</button>
+    </div>
+    <div id="admin-categories-list"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Periods</div>
+    <div id="admin-periods-content"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { esc, memberColor, initial, isAdult, hubConfirm, formatRelativeDate } from "/hub-sdk.js";
+import { buildLeaderboard, memberTotal, rankLabel, canAwardPoints } from "./logic.js";
+
+const CONTEXT = window.__CONTEXT_URL ?? "";
+const DB      = window.__DB_URL      ?? "";
+const ME      = window.__CURRENT_MEMBER ?? null;
+const APP_ID  = window.__APP_ID ?? "points-recognition";
+const EVENTS_URL = window.__EVENTS_URL ?? "/api/events";
+
+// ── State ──────────────────────────────────────────────────────────────────────
+let members = [];
+let periods = [];
+let categories = [];
+let awards = [];      // awards for the period shown in leaderboard
+let allAwards = [];   // all awards across all periods
+let activePeriod = null;
+let selectedPeriodId = null;
+let currentTab = "leaderboard";
+let modalEl = null;
+const selectedIcon = { value: "⭐" };
+
+// ── DB helper ──────────────────────────────────────────────────────────────────
+async function db(sql, params = []) {
+  if (!DB) return { rows: [] };
+  const res = await fetch(DB, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sql, params }),
+  });
+  return res.json();
+}
+
+// ── Demo data ──────────────────────────────────────────────────────────────────
+function loadDemoData() {
+  members = [
+    { id: "d1", name: "Alex Chen", role: "adult" },
+    { id: "d2", name: "Jordan Lee", role: "adult" },
+    { id: "d3", name: "Sam Rivera", role: "adult" },
+    { id: "d4", name: "Taylor Kim", role: "adult" },
+    { id: "d5", name: "Morgan Park", role: "adult" },
+  ];
+  categories = [
+    { id: "c1", name: "Attendance", icon: "📋", description: "" },
+    { id: "c2", name: "Service", icon: "🤝", description: "" },
+    { id: "c3", name: "Volunteering", icon: "💪", description: "" },
+    { id: "c4", name: "Leadership", icon: "⭐", description: "" },
+  ];
+  periods = [
+    { id: "p1", name: "Fall 2025", is_active: 1, started_at: "2025-09-01T00:00:00.000Z", closed_at: null, created_at: "2025-09-01T00:00:00.000Z" },
+    { id: "p0", name: "Spring 2025", is_active: 0, started_at: "2025-01-15T00:00:00.000Z", closed_at: "2025-05-30T00:00:00.000Z", created_at: "2025-01-15T00:00:00.000Z" },
+  ];
+  activePeriod = periods[0];
+  selectedPeriodId = "p1";
+  allAwards = [
+    { id: "a1", period_id: "p1", category_id: "c1", member_id: "d1", points: 100, note: "Perfect attendance all month", awarded_by: "d3", awarded_at: "2025-10-01T10:00:00.000Z", category_name: "Attendance", category_icon: "📋" },
+    { id: "a2", period_id: "p1", category_id: "c3", member_id: "d1", points: 75, note: "Food bank Saturday", awarded_by: "d3", awarded_at: "2025-10-10T10:00:00.000Z", category_name: "Volunteering", category_icon: "💪" },
+    { id: "a3", period_id: "p1", category_id: "c2", member_id: "d2", points: 50, note: "Community cleanup", awarded_by: "d3", awarded_at: "2025-10-05T10:00:00.000Z", category_name: "Service", category_icon: "🤝" },
+    { id: "a4", period_id: "p1", category_id: "c4", member_id: "d2", points: 80, note: "Led chapter meeting", awarded_by: "d3", awarded_at: "2025-10-15T10:00:00.000Z", category_name: "Leadership", category_icon: "⭐" },
+    { id: "a5", period_id: "p1", category_id: "c1", member_id: "d3", points: 90, note: "", awarded_by: "d3", awarded_at: "2025-10-12T10:00:00.000Z", category_name: "Attendance", category_icon: "📋" },
+    { id: "a6", period_id: "p1", category_id: "c2", member_id: "d4", points: 60, note: "Bake sale fundraiser", awarded_by: "d3", awarded_at: "2025-10-08T10:00:00.000Z", category_name: "Service", category_icon: "🤝" },
+    { id: "a7", period_id: "p1", category_id: "c1", member_id: "d5", points: 45, note: "", awarded_by: "d3", awarded_at: "2025-10-20T10:00:00.000Z", category_name: "Attendance", category_icon: "📋" },
+    { id: "a8", period_id: "p0", category_id: "c1", member_id: "d1", points: 120, note: "", awarded_by: "d3", awarded_at: "2025-04-01T10:00:00.000Z", category_name: "Attendance", category_icon: "📋", period_name: "Spring 2025" },
+  ];
+  awards = allAwards.filter(a => a.period_id === "p1");
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────────
+async function init() {
+  await loadMembers();
+  if (!DB) {
+    loadDemoData();
+  } else {
+    await Promise.all([loadPeriods(), loadCategories()]);
+    activePeriod = periods.find(p => p.is_active === 1) ?? null;
+    selectedPeriodId = activePeriod?.id ?? periods[0]?.id ?? null;
+    if (categories.length === 0) await seedDefaultCategories();
+    await Promise.all([
+      loadAwardsForPeriod(selectedPeriodId),
+      loadAllAwards(),
+    ]);
+  }
+
+  if (canAwardPoints(ME)) {
+    document.getElementById("admin-tab-btn").style.display = "";
+  }
+
+  renderPeriodSelect();
+  renderCategorySelect();
+  renderLeaderboard();
+}
+
+// ── Members ────────────────────────────────────────────────────────────────────
+async function loadMembers() {
+  if (!CONTEXT) return;
+  try {
+    const res = await fetch(`${CONTEXT}?keys=family.members`);
+    members = ((await res.json())["family.members"]) ?? [];
+  } catch { members = []; }
+}
+
+// ── DB loaders ─────────────────────────────────────────────────────────────────
+async function loadPeriods() {
+  const { rows } = await db(`SELECT * FROM pr_periods ORDER BY created_at DESC`);
+  periods = rows;
+}
+
+async function loadCategories() {
+  const { rows } = await db(`SELECT * FROM pr_categories ORDER BY created_at ASC`);
+  categories = rows;
+}
+
+async function loadAwardsForPeriod(periodId) {
+  if (!periodId) { awards = []; return; }
+  const { rows } = await db(
+    `SELECT a.*, c.name as category_name, c.icon as category_icon
+     FROM pr_awards a
+     JOIN pr_categories c ON c.id = a.category_id
+     WHERE a.period_id = ?
+     ORDER BY a.awarded_at DESC`,
+    [periodId]
+  );
+  awards = rows;
+}
+
+async function loadAllAwards() {
+  const { rows } = await db(
+    `SELECT a.*, c.name as category_name, c.icon as category_icon, p.name as period_name
+     FROM pr_awards a
+     JOIN pr_categories c ON c.id = a.category_id
+     JOIN pr_periods p ON p.id = a.period_id
+     ORDER BY a.awarded_at DESC`
+  );
+  allAwards = rows;
+}
+
+async function seedDefaultCategories() {
+  const defaults = [
+    { name: "Attendance", icon: "📋" },
+    { name: "Service", icon: "🤝" },
+    { name: "Volunteering", icon: "💪" },
+    { name: "Leadership", icon: "⭐" },
+  ];
+  const now = new Date().toISOString();
+  for (const cat of defaults) {
+    await db(
+      `INSERT INTO pr_categories (id, household_id, name, icon, description, created_at, created_by)
+       VALUES (?, '', ?, ?, '', ?, 'system')`,
+      [crypto.randomUUID(), cat.name, cat.icon, now]
+    );
+  }
+  await loadCategories();
+}
+
+// ── Tab navigation ─────────────────────────────────────────────────────────────
+window.switchTab = function(tab) {
+  currentTab = tab;
+  document.querySelectorAll(".tab-nav button").forEach(btn => btn.classList.remove("active"));
+  document.querySelectorAll(".tab-nav button").forEach((btn, i) => {
+    const tabs = ["leaderboard", "mypoints", "admin"];
+    if (btn.id === "admin-tab-btn") {
+      if (tab === "admin") btn.classList.add("active");
+    } else {
+      if (tabs[i] === tab) btn.classList.add("active");
+    }
+  });
+  document.getElementById("view-leaderboard").classList.toggle("active", tab === "leaderboard");
+  document.getElementById("view-mypoints").classList.toggle("active", tab === "mypoints");
+  document.getElementById("view-admin").classList.toggle("active", tab === "admin");
+
+  if (tab === "mypoints") renderMyPoints();
+  if (tab === "admin") renderAdmin();
+};
+
+// ── Leaderboard ────────────────────────────────────────────────────────────────
+function renderPeriodSelect() {
+  const sel = document.getElementById("period-select");
+  if (!periods.length) {
+    sel.innerHTML = `<option value="">No periods yet</option>`;
+    return;
+  }
+  sel.innerHTML = periods.map(p =>
+    `<option value="${esc(p.id)}"${p.id === selectedPeriodId ? " selected" : ""}>${esc(p.name)}${p.is_active === 1 ? " (active)" : ""}</option>`
+  ).join("");
+}
+
+function renderCategorySelect() {
+  const sel = document.getElementById("category-select");
+  sel.innerHTML = `<option value="">All Categories</option>` +
+    categories.map(c => `<option value="${esc(c.id)}">${esc(c.icon)} ${esc(c.name)}</option>`).join("");
+}
+
+window.onPeriodChange = async function() {
+  selectedPeriodId = document.getElementById("period-select").value || null;
+  if (DB) {
+    await loadAwardsForPeriod(selectedPeriodId);
+  } else {
+    awards = allAwards.filter(a => a.period_id === selectedPeriodId);
+  }
+  renderLeaderboard();
+};
+
+function renderLeaderboard() {
+  const categoryId = document.getElementById("category-select").value || null;
+  const list = document.getElementById("leaderboard-list");
+
+  if (!selectedPeriodId) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">⭐</div><p>No period selected. Leadership can create a period in the Admin tab.</p></div>`;
+    return;
+  }
+
+  const ranked = buildLeaderboard(awards, members, categoryId);
+
+  if (!ranked.length) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">⭐</div><p>No points awarded yet${categoryId ? " in this category" : ""}.</p></div>`;
+    return;
+  }
+
+  list.innerHTML = ranked.map(({ member, points }, i) => {
+    const color = memberColor(member.id, members);
+    return `
+      <div class="lb-row">
+        <div class="lb-rank">${rankLabel(i)}</div>
+        <span class="member-avatar" style="background:${color}">${esc(initial(member.name))}</span>
+        <div class="lb-name">${esc(member.name)}</div>
+        <div><span class="lb-points">${points.toLocaleString()}</span><span class="lb-pts-label">pts</span></div>
+      </div>
+    `;
+  }).join("");
+}
+
+// ── My Points ──────────────────────────────────────────────────────────────────
+function renderMyPoints() {
+  const el = document.getElementById("mypoints-content");
+  if (!ME) {
+    el.innerHTML = `<div class="card"><div class="empty-state"><div class="empty-icon">👤</div><p>Sign in to see your points.</p></div></div>`;
+    return;
+  }
+
+  if (!selectedPeriodId && !periods.length) {
+    el.innerHTML = `<div class="card"><div class="empty-state"><div class="empty-icon">⭐</div><p>No active period yet. Check back after leadership sets one up.</p></div></div>`;
+    return;
+  }
+
+  const periodAwards = allAwards.filter(a => a.period_id === selectedPeriodId && a.member_id === ME.id);
+  const currentTotal = memberTotal(ME.id, periodAwards);
+  const careerTotal  = memberTotal(ME.id, allAwards);
+  const period = periods.find(p => p.id === selectedPeriodId);
+
+  const ranked = buildLeaderboard(awards, members);
+  const myRank = ranked.findIndex(r => r.member.id === ME.id);
+
+  const myHistory = allAwards.filter(a => a.member_id === ME.id);
+
+  el.innerHTML = `
+    <div class="summary-grid">
+      <div class="summary-cell">
+        <div class="val">${currentTotal.toLocaleString()}</div>
+        <div class="lbl">${esc(period?.name ?? "Current period")}</div>
+      </div>
+      <div class="summary-cell">
+        <div class="val">${myRank >= 0 ? rankLabel(myRank) : "—"}</div>
+        <div class="lbl">Current rank</div>
+      </div>
+      <div class="summary-cell">
+        <div class="val">${careerTotal.toLocaleString()}</div>
+        <div class="lbl">Career total</div>
+      </div>
+      <div class="summary-cell">
+        <div class="val">${myHistory.length}</div>
+        <div class="lbl">Total awards</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Award History</div>
+      ${myHistory.length === 0
+        ? `<div class="empty-state"><div class="empty-icon">⭐</div><p>No awards yet.</p></div>`
+        : myHistory.map(a => {
+            const awarder = members.find(m => m.id === a.awarded_by);
+            const date = formatRelativeDate ? formatRelativeDate(a.awarded_at) : new Date(a.awarded_at).toLocaleDateString();
+            const periodLabel = a.period_name ? ` · ${esc(a.period_name)}` : "";
+            return `
+              <div class="award-row">
+                <div class="award-icon">${esc(a.category_icon)}</div>
+                <div class="award-body">
+                  <div class="award-cat">${esc(a.category_name)}</div>
+                  <div class="award-meta">${date}${awarder ? ` · from ${esc(awarder.name)}` : ""}${periodLabel}</div>
+                  ${a.note ? `<div class="award-note">"${esc(a.note)}"</div>` : ""}
+                </div>
+                <div class="award-points">+${a.points}</div>
+              </div>
+            `;
+          }).join("")
+      }
+    </div>
+  `;
+}
+
+// ── Admin ──────────────────────────────────────────────────────────────────────
+function renderAdmin() {
+  renderAdminCategories();
+  renderAdminPeriods();
+}
+
+function renderAdminCategories() {
+  const el = document.getElementById("admin-categories-list");
+  if (!categories.length) {
+    el.innerHTML = `<p style="font-size:.85rem; color:var(--hub-text-muted,#6b7280); padding:8px 0;">No categories yet.</p>`;
+    return;
+  }
+  el.innerHTML = categories.map(c => `
+    <div class="cat-row">
+      <div class="cat-icon">${esc(c.icon)}</div>
+      <div class="cat-name">${esc(c.name)}</div>
+      <div class="cat-actions">
+        <button class="btn-small" onclick="openCategoryModal('${esc(c.id)}')">Edit</button>
+        <button class="btn-small danger" onclick="deleteCategory('${esc(c.id)}', '${esc(c.name)}')">Delete</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function renderAdminPeriods() {
+  const el = document.getElementById("admin-periods-content");
+
+  if (!periods.length) {
+    el.innerHTML = `
+      <div class="no-period-cta">
+        <p>No periods created yet. Create a period to start awarding points.</p>
+        <button class="btn-primary" style="width:auto;padding:10px 24px" onclick="openNewPeriodModal()">Create First Period</button>
+      </div>
+    `;
+    return;
+  }
+
+  const active = periods.find(p => p.is_active === 1);
+  const past   = periods.filter(p => p.is_active !== 1);
+
+  const activeHtml = active ? (() => {
+    const awardCount = allAwards.filter(a => a.period_id === active.id).length;
+    const startDate = new Date(active.started_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+    return `
+      <div class="period-card-active">
+        <div class="period-name">🟢 ${esc(active.name)}</div>
+        <div class="period-meta">Started ${startDate} · ${awardCount} award${awardCount === 1 ? "" : "s"}</div>
+        <div class="period-actions">
+          <button class="btn-small" onclick="openRenamePeriodModal('${esc(active.id)}', '${esc(active.name)}')">Rename</button>
+          <button class="btn-small danger" onclick="openClosePeriodModal('${esc(active.id)}', '${esc(active.name)}')">Close &amp; Start New</button>
+        </div>
+      </div>
+    `;
+  })() : `
+    <div class="no-period-cta" style="text-align:left;padding:0 0 16px">
+      <p>No active period.</p>
+      <button class="btn-secondary" onclick="openNewPeriodModal()">+ Create New Period</button>
+    </div>
+  `;
+
+  const pastHtml = past.length ? `
+    <div style="margin-top:12px">
+      <div class="card-title">Past Periods</div>
+      ${past.map(p => {
+        const awardCount = allAwards.filter(a => a.period_id === p.id).length;
+        const startDate = new Date(p.started_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+        const endDate = p.closed_at ? new Date(p.closed_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "—";
+        return `
+          <div class="past-period-row">
+            <div class="past-period-name">${esc(p.name)}</div>
+            <div class="past-period-meta">${startDate} – ${endDate} · ${awardCount} award${awardCount === 1 ? "" : "s"}</div>
+          </div>
+        `;
+      }).join("")}
+    </div>
+  ` : "";
+
+  el.innerHTML = activeHtml + pastHtml;
+
+  if (!active) {
+    el.innerHTML += `<div style="margin-top:8px"><button class="btn-secondary" onclick="openNewPeriodModal()">+ Create New Period</button></div>`;
+  }
+}
+
+// ── Award Points modal ─────────────────────────────────────────────────────────
+window.openAwardModal = function() {
+  if (!activePeriod) {
+    openModal(`
+      <h2>Award Points</h2>
+      <p style="color:var(--hub-text-muted,#6b7280); font-size:.9rem; margin-bottom:20px;">No active period. Create a period first in the Periods section below.</p>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeModal()">Close</button>
+      </div>
+    `);
+    return;
+  }
+  openModal(`
+    <h2>Award Points</h2>
+    <div class="form-group">
+      <label for="f-member">Member</label>
+      <select id="f-member">
+        <option value="">Select member…</option>
+        ${members.map(m => `<option value="${esc(m.id)}">${esc(m.name)}</option>`).join("")}
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="f-category">Category</label>
+      <select id="f-category">
+        <option value="">Select category…</option>
+        ${categories.map(c => `<option value="${esc(c.id)}">${esc(c.icon)} ${esc(c.name)}</option>`).join("")}
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="f-points">Points</label>
+      <input type="number" id="f-points" value="10" min="1" max="1000" />
+      <div class="form-hint">1 – 1000</div>
+    </div>
+    <div class="form-group">
+      <label for="f-note">Note <span style="font-weight:400;color:var(--hub-text-muted,#6b7280)">(optional)</span></label>
+      <textarea id="f-note" placeholder="e.g. Perfect attendance this month…"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" id="award-submit-btn" onclick="submitAward()">Award Points</button>
+    </div>
+  `);
+};
+
+window.submitAward = async function() {
+  const memberId   = document.getElementById("f-member").value;
+  const categoryId = document.getElementById("f-category").value;
+  const pointsVal  = parseInt(document.getElementById("f-points").value, 10);
+  const note       = document.getElementById("f-note").value.trim();
+
+  if (!memberId) { document.getElementById("f-member").focus(); return; }
+  if (!categoryId) { document.getElementById("f-category").focus(); return; }
+  if (!pointsVal || pointsVal < 1 || pointsVal > 1000) { document.getElementById("f-points").focus(); return; }
+
+  const btn = document.getElementById("award-submit-btn");
+  btn.disabled = true;
+  btn.textContent = "Saving…";
+
+  try {
+    const id  = crypto.randomUUID();
+    const now = new Date().toISOString();
+    await db(
+      `INSERT INTO pr_awards (id, household_id, period_id, category_id, member_id, points, note, awarded_by, awarded_at)
+       VALUES (?, '', ?, ?, ?, ?, ?, ?, ?)`,
+      [id, activePeriod.id, categoryId, memberId, pointsVal, note, ME?.id ?? "", now]
+    );
+
+    const member = members.find(m => m.id === memberId);
+    const cat    = categories.find(c => c.id === categoryId);
+
+    await Promise.all([
+      loadAwardsForPeriod(selectedPeriodId),
+      loadAllAwards(),
+      notify(
+        `${pointsVal} pts awarded to ${member?.name ?? "a member"}`,
+        `${cat?.icon ?? "⭐"} ${cat?.name ?? "Points"}: ${note || "No note"}`
+      ),
+      logActivity(id, memberId, pointsVal, cat?.name ?? ""),
+    ]);
+
+    closeModal();
+    renderLeaderboard();
+    showToast(`+${pointsVal} pts awarded to ${member?.name ?? "member"}!`);
+  } catch (e) {
+    console.error(e);
+    btn.disabled = false;
+    btn.textContent = "Award Points";
+  }
+};
+
+async function notify(title, body) {
+  await fetch("/api/notifications/send", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title, body, url: `/run/${APP_ID}` }),
+  }).catch(() => {});
+}
+
+async function logActivity(awardId, memberId, points, categoryName) {
+  const member = members.find(m => m.id === memberId);
+  await fetch("/api/activity", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      type: "points_awarded",
+      description: `${ME?.name ?? "Leadership"} awarded ${points} pts to ${member?.name ?? "a member"} for ${categoryName}`,
+      metadata: {
+        deepLink: { appId: APP_ID, params: {} },
+      },
+    }),
+  }).catch(() => {});
+}
+
+// ── Category modal ─────────────────────────────────────────────────────────────
+const ICONS = ["📋","🤝","💪","⭐","🏅","🎯","🎖️","🏆","📣","💡","🔥","✨","🌟","👑","🦁","🎓","📚","🌱","🤺","🏋️","🎪","🎨","🎵","🧩","🚀","🌍","💎","🛡️","⚡","🎉","🌈","❤️"];
+
+window.openCategoryModal = function(existingId) {
+  const existing = existingId ? categories.find(c => c.id === existingId) : null;
+  selectedIcon.value = existing?.icon ?? ICONS[0];
+
+  openModal(`
+    <h2>${existing ? "Edit Category" : "New Category"}</h2>
+    <div class="form-group">
+      <label for="f-cat-name">Name</label>
+      <input type="text" id="f-cat-name" value="${esc(existing?.name ?? "")}" placeholder="e.g. Community Service…" />
+    </div>
+    <div class="form-group">
+      <label>Icon</label>
+      <div class="emoji-grid" id="emoji-grid">
+        ${ICONS.map(e => `<button class="emoji-btn${e === selectedIcon.value ? " selected" : ""}" onclick="selectIcon('${e}')">${e}</button>`).join("")}
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" id="cat-submit-btn" onclick="submitCategory('${esc(existingId ?? "")}')">${existing ? "Save" : "Create"}</button>
+    </div>
+  `);
+  setTimeout(() => document.getElementById("f-cat-name")?.focus(), 50);
+};
+
+window.selectIcon = function(emoji) {
+  selectedIcon.value = emoji;
+  document.querySelectorAll(".emoji-btn").forEach(btn => {
+    btn.classList.toggle("selected", btn.textContent.trim() === emoji);
+  });
+};
+
+window.submitCategory = async function(existingId) {
+  const name = document.getElementById("f-cat-name").value.trim();
+  if (!name) { document.getElementById("f-cat-name").focus(); return; }
+
+  const btn = document.getElementById("cat-submit-btn");
+  btn.disabled = true;
+  btn.textContent = "Saving…";
+
+  try {
+    if (existingId) {
+      await db(`UPDATE pr_categories SET name = ?, icon = ? WHERE id = ?`, [name, selectedIcon.value, existingId]);
+    } else {
+      await db(
+        `INSERT INTO pr_categories (id, household_id, name, icon, description, created_at, created_by)
+         VALUES (?, '', ?, ?, '', ?, ?)`,
+        [crypto.randomUUID(), name, selectedIcon.value, new Date().toISOString(), ME?.id ?? ""]
+      );
+    }
+    await loadCategories();
+    closeModal();
+    renderCategorySelect();
+    renderAdminCategories();
+    showToast(existingId ? `"${name}" updated` : `"${name}" created`);
+  } catch (e) {
+    console.error(e);
+    btn.disabled = false;
+    btn.textContent = existingId ? "Save" : "Create";
+  }
+};
+
+window.deleteCategory = async function(id, name) {
+  const ok = await hubConfirm({
+    message: `Delete "${name}"?`,
+    description: "Awards already given under this category will be removed from the leaderboard.",
+    confirmLabel: "Delete",
+    destructive: true,
+  });
+  if (!ok) return;
+
+  await db(`DELETE FROM pr_categories WHERE id = ?`, [id]);
+  await db(`DELETE FROM pr_awards WHERE category_id = ?`, [id]);
+  await Promise.all([loadCategories(), loadAwardsForPeriod(selectedPeriodId), loadAllAwards()]);
+  renderCategorySelect();
+  renderLeaderboard();
+  renderAdmin();
+  showToast(`"${name}" deleted`);
+};
+
+// ── Period modals ──────────────────────────────────────────────────────────────
+window.openNewPeriodModal = function() {
+  openModal(`
+    <h2>Create Period</h2>
+    <div class="form-group">
+      <label for="f-period-name">Period Name</label>
+      <input type="text" id="f-period-name" placeholder="e.g. Fall 2026…" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" id="period-submit-btn" onclick="submitNewPeriod()">Create</button>
+    </div>
+  `);
+  setTimeout(() => document.getElementById("f-period-name")?.focus(), 50);
+};
+
+window.submitNewPeriod = async function() {
+  const name = document.getElementById("f-period-name").value.trim();
+  if (!name) { document.getElementById("f-period-name").focus(); return; }
+
+  const btn = document.getElementById("period-submit-btn");
+  btn.disabled = true;
+  btn.textContent = "Creating…";
+
+  try {
+    const now = new Date().toISOString();
+    await db(
+      `INSERT INTO pr_periods (id, household_id, name, started_at, is_active, created_at, created_by)
+       VALUES (?, '', ?, ?, 1, ?, ?)`,
+      [crypto.randomUUID(), name, now, now, ME?.id ?? ""]
+    );
+    await loadPeriods();
+    activePeriod = periods.find(p => p.is_active === 1) ?? null;
+    selectedPeriodId = activePeriod?.id ?? null;
+    await loadAwardsForPeriod(selectedPeriodId);
+    closeModal();
+    renderPeriodSelect();
+    renderLeaderboard();
+    renderAdmin();
+    showToast(`Period "${name}" created`);
+  } catch (e) {
+    console.error(e);
+    btn.disabled = false;
+    btn.textContent = "Create";
+  }
+};
+
+window.openRenamePeriodModal = function(id, currentName) {
+  openModal(`
+    <h2>Rename Period</h2>
+    <div class="form-group">
+      <label for="f-rename-period">New Name</label>
+      <input type="text" id="f-rename-period" value="${esc(currentName)}" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" id="rename-submit-btn" onclick="submitRenamePeriod('${esc(id)}')">Save</button>
+    </div>
+  `);
+  setTimeout(() => {
+    const inp = document.getElementById("f-rename-period");
+    inp?.focus();
+    inp?.select();
+  }, 50);
+};
+
+window.submitRenamePeriod = async function(id) {
+  const name = document.getElementById("f-rename-period").value.trim();
+  if (!name) { document.getElementById("f-rename-period").focus(); return; }
+
+  const btn = document.getElementById("rename-submit-btn");
+  btn.disabled = true;
+  btn.textContent = "Saving…";
+
+  try {
+    await db(`UPDATE pr_periods SET name = ? WHERE id = ?`, [name, id]);
+    await loadPeriods();
+    activePeriod = periods.find(p => p.is_active === 1) ?? null;
+    closeModal();
+    renderPeriodSelect();
+    renderAdmin();
+    showToast(`Period renamed to "${name}"`);
+  } catch (e) {
+    console.error(e);
+    btn.disabled = false;
+    btn.textContent = "Save";
+  }
+};
+
+window.openClosePeriodModal = function(id, name) {
+  openModal(`
+    <h2>Close &amp; Start New Period</h2>
+    <p style="font-size:.9rem; color:var(--hub-text-muted,#6b7280); margin-bottom:18px;">
+      This will close <strong>${esc(name)}</strong> and start a new active period. Historical data is preserved.
+    </p>
+    <div class="form-group">
+      <label for="f-new-period-name">New Period Name</label>
+      <input type="text" id="f-new-period-name" placeholder="e.g. Spring 2026…" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" id="close-period-btn" onclick="submitClosePeriod('${esc(id)}', '${esc(name)}')">Close &amp; Start New</button>
+    </div>
+  `);
+  setTimeout(() => document.getElementById("f-new-period-name")?.focus(), 50);
+};
+
+window.submitClosePeriod = async function(oldId, oldName) {
+  const newName = document.getElementById("f-new-period-name").value.trim();
+  if (!newName) { document.getElementById("f-new-period-name").focus(); return; }
+
+  const btn = document.getElementById("close-period-btn");
+  btn.disabled = true;
+  btn.textContent = "Saving…";
+
+  try {
+    const now = new Date().toISOString();
+    await db(`UPDATE pr_periods SET is_active = 0, closed_at = ? WHERE id = ?`, [now, oldId]);
+    await db(
+      `INSERT INTO pr_periods (id, household_id, name, started_at, is_active, created_at, created_by)
+       VALUES (?, '', ?, ?, 1, ?, ?)`,
+      [crypto.randomUUID(), newName, now, now, ME?.id ?? ""]
+    );
+    await loadPeriods();
+    activePeriod = periods.find(p => p.is_active === 1) ?? null;
+    selectedPeriodId = activePeriod?.id ?? null;
+    await Promise.all([loadAwardsForPeriod(selectedPeriodId), loadAllAwards()]);
+    closeModal();
+    renderPeriodSelect();
+    renderLeaderboard();
+    renderAdmin();
+    showToast(`"${oldName}" closed · "${newName}" started`);
+  } catch (e) {
+    console.error(e);
+    btn.disabled = false;
+    btn.textContent = "Close & Start New";
+  }
+};
+
+// ── Modal helpers ──────────────────────────────────────────────────────────────
+function openModal(html) {
+  closeModal();
+  modalEl = document.createElement("div");
+  modalEl.className = "modal-backdrop";
+  modalEl.innerHTML = `<div class="modal">${html}</div>`;
+  modalEl.addEventListener("click", e => { if (e.target === modalEl) closeModal(); });
+  document.body.appendChild(modalEl);
+}
+
+function closeModal() { modalEl?.remove(); modalEl = null; }
+window.closeModal = closeModal;
+
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+
+// ── Toast ──────────────────────────────────────────────────────────────────────
+let toastTimer = null;
+function showToast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("visible");
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("visible"), 2500);
+}
+
+// ── Tab button active state helper ─────────────────────────────────────────────
+// Fix: directly wire tab buttons to their tabs by position
+document.querySelectorAll(".tab-nav button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab-nav button").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+  });
+});
+
+// ── Deep link ─────────────────────────────────────────────────────────────────
+function handleDeepLink() {
+  const tab = new URLSearchParams(window.location.search).get("tab");
+  if (tab === "admin" && canAwardPoints(ME)) switchTab("admin");
+  else if (tab === "mypoints") switchTab("mypoints");
+}
+
+init().then(handleDeepLink);
+</script>
+</body>
+</html>

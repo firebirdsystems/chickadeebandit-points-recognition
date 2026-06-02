@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <base href="/run/points-recognition/" />
+  <title>Top Members</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--hub-font, system-ui, sans-serif);
+      font-size: var(--hub-font-size, 14px);
+      background: var(--hub-surface, #fff);
+      color: var(--hub-text, #111827);
+      padding: 12px 14px;
+    }
+
+    .widget-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .widget-title {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--hub-text-muted, #6b7280);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+    .period-name {
+      font-size: 0.75rem;
+      color: var(--hub-text-muted, #6b7280);
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--hub-border, #e5e7eb);
+    }
+    .row:last-child { border-bottom: none; }
+
+    .rank { font-size: 1rem; width: 22px; text-align: center; flex-shrink: 0; }
+
+    .avatar {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem; font-weight: 700; color: #fff;
+      flex-shrink: 0;
+    }
+
+    .name { flex: 1; font-weight: 600; font-size: 0.88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pts  { font-weight: 700; color: var(--hub-primary, #6366f1); font-size: 0.88rem; }
+    .pts-label { font-size: 0.7rem; color: var(--hub-text-muted, #6b7280); margin-left: 1px; }
+
+    .empty {
+      text-align: center;
+      padding: 12px 0;
+      color: var(--hub-text-muted, #6b7280);
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="widget-header">
+  <span class="widget-title">⭐ Top Members</span>
+  <span class="period-name" id="period-label"></span>
+</div>
+<div id="list"></div>
+
+<script type="module">
+import { esc, memberColor, initial } from "/hub-sdk.js";
+
+const CONTEXT = window.__CONTEXT_URL ?? "";
+const DB      = window.__DB_URL      ?? "";
+
+const MEDALS = ["🥇", "🥈", "🥉"];
+
+async function db(sql, params = []) {
+  if (!DB) return { rows: [] };
+  const res = await fetch(DB, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sql, params }),
+  });
+  return res.json();
+}
+
+async function init() {
+  let members = [];
+  if (CONTEXT) {
+    try {
+      const res = await fetch(`${CONTEXT}?keys=family.members`);
+      members = ((await res.json())["family.members"]) ?? [];
+    } catch {}
+  }
+
+  if (!DB) {
+    members = [
+      { id: "d1", name: "Alex Chen" },
+      { id: "d2", name: "Jordan Lee" },
+      { id: "d3", name: "Sam Rivera" },
+    ];
+    render([
+      { member_id: "d1", total_points: 175 },
+      { member_id: "d2", total_points: 130 },
+      { member_id: "d3", total_points: 90 },
+    ], members, "Fall 2025");
+    return;
+  }
+
+  const [{ rows: periodRows }, { rows: standings }] = await Promise.all([
+    db(`SELECT name FROM pr_periods WHERE is_active = 1 LIMIT 1`),
+    db(`SELECT a.member_id, SUM(a.points) AS total_points
+        FROM pr_awards a
+        JOIN pr_periods p ON p.id = a.period_id
+        WHERE p.is_active = 1
+        GROUP BY a.member_id
+        ORDER BY total_points DESC
+        LIMIT 3`),
+  ]);
+
+  const periodName = periodRows[0]?.name ?? null;
+  render(standings, members, periodName);
+}
+
+function render(standings, members, periodName) {
+  document.getElementById("period-label").textContent = periodName ?? "";
+
+  const list = document.getElementById("list");
+  if (!standings.length) {
+    list.innerHTML = `<div class="empty">No points awarded yet</div>`;
+    return;
+  }
+
+  list.innerHTML = standings.map((row, i) => {
+    const member = members.find(m => m.id === row.member_id);
+    const name   = member?.name ?? "Unknown";
+    const color  = member ? memberColor(member.id, members) : "#9ca3af";
+    const pts    = Number(row.total_points).toLocaleString();
+    return `
+      <div class="row">
+        <div class="rank">${MEDALS[i] ?? String(i + 1)}</div>
+        <div class="avatar" style="background:${color}">${esc(initial(name))}</div>
+        <div class="name">${esc(name)}</div>
+        <div><span class="pts">${pts}</span><span class="pts-label">pts</span></div>
+      </div>
+    `;
+  }).join("");
+}
+
+init();
+</script>
+</body>
+</html>

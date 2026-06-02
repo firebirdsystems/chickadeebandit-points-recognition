@@ -1,0 +1,27 @@
+{
+  "id": "points-recognition",
+  "name": "Points & Recognition",
+  "version": "1.0.0",
+  "description": "Award points to members for participation, attendance, and volunteering. Live leaderboard with per-period resets — a social currency system for org engagement.",
+  "entrypoint": "index.html",
+  "runtime": "static",
+  "category": "organization",
+  "tags": ["org", "recognition", "points", "leaderboard", "engagement"],
+  "data_access": {
+    "reads": ["family.members"],
+    "writes": []
+  },
+  "permissions": {
+    "default_audience": "everyone",
+    "requires_approval": false
+  },
+  "storage": "db",
+  "icon": "⭐",
+  "nav": { "label": "Points" },
+  "widget": { "label": "Top Members", "size": "small" },
+  "ai_access": {
+    "allowed": true,
+    "mode": "read",
+    "db_exports": ["current_standings", "member_history"]
+  }
+}
