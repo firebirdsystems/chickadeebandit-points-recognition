@@ -537,7 +537,7 @@ async function seedDefaultCategories() {
   for (const cat of defaults) {
     await db(
       `INSERT INTO pr_categories (id, household_id, name, icon, description, created_at, created_by)
-       VALUES (?, '', ?, ?, '', ?, 'system')`,
+       VALUES (?, current_setting('app.household_id', true)::uuid, ?, ?, '', ?, 'system')`,
       [crypto.randomUUID(), cat.name, cat.icon, now]
     );
   }
@@ -847,7 +847,7 @@ window.submitAward = async function() {
   try {
     await db(
       `INSERT INTO pr_awards (id, household_id, period_id, category_id, member_id, points, note, awarded_by, awarded_at)
-       VALUES (?, '', ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, current_setting('app.household_id', true)::uuid, ?, ?, ?, ?, ?, ?, ?)`,
       [id, activePeriod.id, categoryId, memberId, pointsVal, note, ME?.id ?? "", now]
     );
     // Fire-and-forget — don't block the UI on notifications
@@ -955,7 +955,7 @@ window.submitCategory = async function(existingId) {
     try {
       await db(
         `INSERT INTO pr_categories (id, household_id, name, icon, description, created_at, created_by)
-         VALUES (?, '', ?, ?, '', ?, ?)`,
+         VALUES (?, current_setting('app.household_id', true)::uuid, ?, ?, '', ?, ?)`,
         [id, name, icon, now, ME?.id ?? ""]
       );
     } catch (e) {
@@ -1016,7 +1016,7 @@ window.submitNewPeriod = async function() {
     const now = new Date().toISOString();
     await db(
       `INSERT INTO pr_periods (id, household_id, name, started_at, is_active, created_at, created_by)
-       VALUES (?, '', ?, ?, 1, ?, ?)`,
+       VALUES (?, current_setting('app.household_id', true)::uuid, ?, ?, 1, ?, ?)`,
       [crypto.randomUUID(), name, now, now, ME?.id ?? ""]
     );
     await loadPeriods();
@@ -1110,7 +1110,7 @@ window.submitClosePeriod = async function(oldId, oldName) {
       db(`UPDATE pr_periods SET is_active = 0, closed_at = ? WHERE id = ?`, [now, oldId]),
       db(
         `INSERT INTO pr_periods (id, household_id, name, started_at, is_active, created_at, created_by)
-         VALUES (?, '', ?, ?, 1, ?, ?)`,
+         VALUES (?, current_setting('app.household_id', true)::uuid, ?, ?, 1, ?, ?)`,
         [crypto.randomUUID(), newName, now, now, ME?.id ?? ""]
       ),
     ]);
