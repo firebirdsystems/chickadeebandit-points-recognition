@@ -115,10 +115,10 @@ async function init() {
   }
 
   const [{ rows: periodRows }, { rows: standings }] = await Promise.all([
-    db(`SELECT name FROM pr_periods WHERE is_active = 1 LIMIT 1`),
+    db(`SELECT name FROM app_points_recognition__pr_periods WHERE is_active = 1 LIMIT 1`),
     db(`SELECT a.member_id, SUM(a.points) AS total_points
-        FROM pr_awards a
-        JOIN pr_periods p ON p.id = a.period_id
+        FROM app_points_recognition__pr_awards a
+        JOIN app_points_recognition__pr_periods p ON p.id = a.period_id
         WHERE p.is_active = 1
         GROUP BY a.member_id
         ORDER BY total_points DESC

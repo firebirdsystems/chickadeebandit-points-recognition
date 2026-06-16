@@ -1,6 +1,5 @@
-CREATE TABLE IF NOT EXISTS pr_periods (
+CREATE TABLE IF NOT EXISTS app_points_recognition__pr_periods (
   id           TEXT PRIMARY KEY,
-  household_id UUID NOT NULL DEFAULT current_setting('app.household_id', true)::uuid,
   name         TEXT NOT NULL,
   started_at   TEXT NOT NULL,
   closed_at    TEXT,
@@ -9,9 +8,8 @@ CREATE TABLE IF NOT EXISTS pr_periods (
   created_by   TEXT NOT NULL DEFAULT ''
 );
 
-CREATE TABLE IF NOT EXISTS pr_categories (
+CREATE TABLE IF NOT EXISTS app_points_recognition__pr_categories (
   id           TEXT PRIMARY KEY,
-  household_id UUID NOT NULL DEFAULT current_setting('app.household_id', true)::uuid,
   name         TEXT NOT NULL,
   icon         TEXT NOT NULL DEFAULT '⭐',
   description  TEXT NOT NULL DEFAULT '',
@@ -19,9 +17,8 @@ CREATE TABLE IF NOT EXISTS pr_categories (
   created_by   TEXT NOT NULL DEFAULT ''
 );
 
-CREATE TABLE IF NOT EXISTS pr_awards (
+CREATE TABLE IF NOT EXISTS app_points_recognition__pr_awards (
   id           TEXT PRIMARY KEY,
-  household_id UUID NOT NULL DEFAULT current_setting('app.household_id', true)::uuid,
   period_id    TEXT NOT NULL,
   category_id  TEXT NOT NULL,
   member_id    TEXT NOT NULL,

@@ -493,12 +493,12 @@ async function loadMembers() {
 
 // ── DB loaders ─────────────────────────────────────────────────────────────────
 async function loadPeriods() {
-  const { rows } = await db(`SELECT * FROM pr_periods ORDER BY created_at DESC`);
+  const { rows } = await db(`SELECT * FROM app_points_recognition__pr_periods ORDER BY created_at DESC`);
   periods = rows;
 }
 
 async function loadCategories() {
-  const { rows } = await db(`SELECT * FROM pr_categories ORDER BY created_at ASC`);
+  const { rows } = await db(`SELECT * FROM app_points_recognition__pr_categories ORDER BY created_at ASC`);
   categories = rows;
 }
 
@@ -506,8 +506,8 @@ async function loadAwardsForPeriod(periodId) {
   if (!periodId) { awards = []; return; }
   const { rows } = await db(
     `SELECT a.*, c.name as category_name, c.icon as category_icon
-     FROM pr_awards a
-     JOIN pr_categories c ON c.id = a.category_id
+     FROM app_points_recognition__pr_awards a
+     JOIN app_points_recognition__pr_categories c ON c.id = a.category_id
      WHERE a.period_id = ?
      ORDER BY a.awarded_at DESC`,
     [periodId]
@@ -518,9 +518,9 @@ async function loadAwardsForPeriod(periodId) {
 async function loadAllAwards() {
   const { rows } = await db(
     `SELECT a.*, c.name as category_name, c.icon as category_icon, p.name as period_name
-     FROM pr_awards a
-     JOIN pr_categories c ON c.id = a.category_id
-     JOIN pr_periods p ON p.id = a.period_id
+     FROM app_points_recognition__pr_awards a
+     JOIN app_points_recognition__pr_categories c ON c.id = a.category_id
+     JOIN app_points_recognition__pr_periods p ON p.id = a.period_id
      ORDER BY a.awarded_at DESC`
   );
   allAwards = rows;
@@ -536,8 +536,8 @@ async function seedDefaultCategories() {
   const now = new Date().toISOString();
   for (const cat of defaults) {
     await db(
-      `INSERT INTO pr_categories (id, household_id, name, icon, description, created_at, created_by)
-       VALUES (?, current_setting('app.household_id', true)::uuid, ?, ?, '', ?, 'system')`,
+      `INSERT INTO app_points_recognition__pr_categories (id, name, icon, description, created_at, created_by)
+       VALUES (?, ?, ?, '', ?, 'system')`,
       [crypto.randomUUID(), cat.name, cat.icon, now]
     );
   }
@@ -846,8 +846,8 @@ window.submitAward = async function() {
 
   try {
     await db(
-      `INSERT INTO pr_awards (id, household_id, period_id, category_id, member_id, points, note, awarded_by, awarded_at)
-       VALUES (?, current_setting('app.household_id', true)::uuid, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [id, activePeriod.id, categoryId, memberId, pointsVal, note, ME?.id ?? "", now]
     );
     // Fire-and-forget — don't block the UI on notifications
@@ -936,7 +936,7 @@ window.submitCategory = async function(existingId) {
     renderAdminCategories();
     showToast(`"${name}" updated`);
     try {
-      await db(`UPDATE pr_categories SET name = ?, icon = ? WHERE id = ?`, [name, icon, existingId]);
+      await db(`UPDATE app_points_recognition__pr_categories SET name = ?, icon = ? WHERE id = ?`, [name, icon, existingId]);
     } catch (e) {
       console.error(e);
       categories = prev;
@@ -954,8 +954,8 @@ window.submitCategory = async function(existingId) {
     showToast(`"${name}" created`);
     try {
       await db(
-        `INSERT INTO pr_categories (id, household_id, name, icon, description, created_at, created_by)
-         VALUES (?, current_setting('app.household_id', true)::uuid, ?, ?, '', ?, ?)`,
+        `INSERT INTO app_points_recognition__pr_categories (id, name, icon, description, created_at, created_by)
+         VALUES (?, ?, ?, '', ?, ?)`,
         [id, name, icon, now, ME?.id ?? ""]
       );
     } catch (e) {
@@ -978,8 +978,8 @@ window.deleteCategory = async function(id, name) {
   if (!ok) return;
 
   await Promise.all([
-    db(`DELETE FROM pr_categories WHERE id = ?`, [id]),
-    db(`DELETE FROM pr_awards WHERE category_id = ?`, [id]),
+    db(`DELETE FROM app_points_recognition__pr_categories WHERE id = ?`, [id]),
+    db(`DELETE FROM app_points_recognition__pr_awards WHERE category_id = ?`, [id]),
   ]);
   await Promise.all([loadCategories(), loadAwardsForPeriod(selectedPeriodId), loadAllAwards()]);
   renderCategorySelect();
@@ -1015,8 +1015,8 @@ window.submitNewPeriod = async function() {
   try {
     const now = new Date().toISOString();
     await db(
-      `INSERT INTO pr_periods (id, household_id, name, started_at, is_active, created_at, created_by)
-       VALUES (?, current_setting('app.household_id', true)::uuid, ?, ?, 1, ?, ?)`,
+      `INSERT INTO app_points_recognition__pr_periods (id, name, started_at, is_active, created_at, created_by)
+       VALUES (?, ?, ?, 1, ?, ?)`,
       [crypto.randomUUID(), name, now, now, ME?.id ?? ""]
     );
     await loadPeriods();
@@ -1067,7 +1067,7 @@ window.submitRenamePeriod = async function(id) {
   showToast(`Period renamed to "${name}"`);
 
   try {
-    await db(`UPDATE pr_periods SET name = ? WHERE id = ?`, [name, id]);
+    await db(`UPDATE app_points_recognition__pr_periods SET name = ? WHERE id = ?`, [name, id]);
   } catch (e) {
     console.error(e);
     periods = prev;
@@ -1107,10 +1107,10 @@ window.submitClosePeriod = async function(oldId, oldName) {
   try {
     const now = new Date().toISOString();
     await Promise.all([
-      db(`UPDATE pr_periods SET is_active = 0, closed_at = ? WHERE id = ?`, [now, oldId]),
+      db(`UPDATE app_points_recognition__pr_periods SET is_active = 0, closed_at = ? WHERE id = ?`, [now, oldId]),
       db(
-        `INSERT INTO pr_periods (id, household_id, name, started_at, is_active, created_at, created_by)
-         VALUES (?, current_setting('app.household_id', true)::uuid, ?, ?, 1, ?, ?)`,
+        `INSERT INTO app_points_recognition__pr_periods (id, name, started_at, is_active, created_at, created_by)
+         VALUES (?, ?, ?, 1, ?, ?)`,
         [crypto.randomUUID(), newName, now, now, ME?.id ?? ""]
       ),
     ]);

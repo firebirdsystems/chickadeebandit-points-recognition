@@ -9,9 +9,8 @@ SELECT
   c.icon AS category_icon,
   p.name AS period_name,
   p.is_active AS period_is_active
-FROM pr_awards a
-JOIN pr_categories c ON c.id = a.category_id
-JOIN pr_periods p ON p.id = a.period_id
-WHERE a.household_id = current_setting('app.household_id', true)::uuid
+FROM app_points_recognition__pr_awards a
+JOIN app_points_recognition__pr_categories c ON c.id = a.category_id
+JOIN app_points_recognition__pr_periods p ON p.id = a.period_id
 ORDER BY a.awarded_at DESC
 LIMIT 200
