@@ -866,7 +866,7 @@ window.submitAward = async function() {
 };
 
 async function notify(title, body) {
-  await fetch("/api/notifications/send", {
+  await fetch(window.__NOTIFY_URL ?? "/api/notifications/send", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ title, body, url: `/run/${APP_ID}` }),
@@ -875,7 +875,7 @@ async function notify(title, body) {
 
 async function logActivity(awardId, memberId, points, categoryName) {
   const member = members.find(m => m.id === memberId);
-  await fetch("/api/activity", {
+  await fetch(window.__ACTIVITY_URL ?? "/api/activity", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
