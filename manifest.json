@@ -16,6 +16,11 @@
     "requires_approval": false
   },
   "storage": "db",
+  "row_policies": {
+    "pr_awards":     { "kind": "adult_writable" },
+    "pr_categories": { "kind": "adult_writable" },
+    "pr_periods":    { "kind": "adult_writable" }
+  },
   "icon": "⭐",
   "nav": { "label": "Points" },
   "widget": { "label": "Top Members", "size": "small" },

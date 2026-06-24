@@ -466,7 +466,7 @@ async function init() {
     await Promise.all([loadMembers(), loadPeriods(), loadCategories()]);
     activePeriod = periods.find(p => p.is_active === 1) ?? null;
     selectedPeriodId = activePeriod?.id ?? periods[0]?.id ?? null;
-    if (categories.length === 0) await seedDefaultCategories();
+    if (categories.length === 0 && canAwardPoints(ME)) await seedDefaultCategories();
     await Promise.all([
       loadAwardsForPeriod(selectedPeriodId),
       loadAllAwards(),
@@ -521,7 +521,8 @@ async function loadAllAwards() {
      FROM app_points_recognition__pr_awards a
      JOIN app_points_recognition__pr_categories c ON c.id = a.category_id
      JOIN app_points_recognition__pr_periods p ON p.id = a.period_id
-     ORDER BY a.awarded_at DESC`
+     ORDER BY a.awarded_at DESC
+     LIMIT 2000`
   );
   allAwards = rows;
 }
@@ -534,13 +535,13 @@ async function seedDefaultCategories() {
     { name: "Leadership", icon: "⭐" },
   ];
   const now = new Date().toISOString();
-  for (const cat of defaults) {
-    await db(
-      `INSERT INTO app_points_recognition__pr_categories (id, name, icon, description, created_at, created_by)
+  await Promise.all(defaults.map(cat =>
+    db(
+      `INSERT OR IGNORE INTO app_points_recognition__pr_categories (id, name, icon, description, created_at, created_by)
        VALUES (?, ?, ?, '', ?, 'system')`,
       [crypto.randomUUID(), cat.name, cat.icon, now]
-    );
-  }
+    )
+  ));
   await loadCategories();
 }
 
@@ -706,7 +707,7 @@ function renderAdminCategories() {
       <div class="cat-name">${esc(c.name)}</div>
       <div class="cat-actions">
         <button class="btn-small" onclick="openCategoryModal('${esc(c.id)}')">Edit</button>
-        <button class="btn-small danger" onclick="deleteCategory('${esc(c.id)}', '${esc(c.name)}')">Delete</button>
+        <button class="btn-small danger" onclick="deleteCategory('${esc(c.id)}')">Delete</button>
       </div>
     </div>
   `).join("");
@@ -736,8 +737,8 @@ function renderAdminPeriods() {
         <div class="period-name">🟢 ${esc(active.name)}</div>
         <div class="period-meta">Started ${startDate} · ${awardCount} award${awardCount === 1 ? "" : "s"}</div>
         <div class="period-actions">
-          <button class="btn-small" onclick="openRenamePeriodModal('${esc(active.id)}', '${esc(active.name)}')">Rename</button>
-          <button class="btn-small danger" onclick="openClosePeriodModal('${esc(active.id)}', '${esc(active.name)}')">Close &amp; Start New</button>
+          <button class="btn-small" onclick="openRenamePeriodModal('${esc(active.id)}')">Rename</button>
+          <button class="btn-small danger" onclick="openClosePeriodModal('${esc(active.id)}')">Close &amp; Start New</button>
         </div>
       </div>
     `;
@@ -790,7 +791,7 @@ window.openAwardModal = function() {
       <label for="f-member">Member</label>
       <select id="f-member">
         <option value="">Select member…</option>
-        ${members.map(m => `<option value="${esc(m.id)}">${esc(m.name)}</option>`).join("")}
+        ${members.filter(m => m.id !== ME?.id).map(m => `<option value="${esc(m.id)}">${esc(m.name)}</option>`).join("")}
       </select>
     </div>
     <div class="form-group">
@@ -823,6 +824,7 @@ window.submitAward = async function() {
   const note       = document.getElementById("f-note").value.trim();
 
   if (!memberId) { document.getElementById("f-member").focus(); return; }
+  if (memberId === ME?.id) { showToast("You cannot award points to yourself."); return; }
   if (!categoryId) { document.getElementById("f-category").focus(); return; }
   if (!pointsVal || pointsVal < 1 || pointsVal > 1000) { document.getElementById("f-points").focus(); return; }
 
@@ -968,7 +970,8 @@ window.submitCategory = async function(existingId) {
   }
 };
 
-window.deleteCategory = async function(id, name) {
+window.deleteCategory = async function(id) {
+  const name = categories.find(c => c.id === id)?.name ?? "";
   const ok = await hubConfirm({
     message: `Delete "${name}"?`,
     description: "Awards already given under this category will be removed from the leaderboard.",
@@ -1035,7 +1038,8 @@ window.submitNewPeriod = async function() {
   }
 };
 
-window.openRenamePeriodModal = function(id, currentName) {
+window.openRenamePeriodModal = function(id) {
+  const currentName = periods.find(p => p.id === id)?.name ?? "";
   openModal(`
     <h2>Rename Period</h2>
     <div class="form-group">
@@ -1078,7 +1082,8 @@ window.submitRenamePeriod = async function(id) {
   }
 };
 
-window.openClosePeriodModal = function(id, name) {
+window.openClosePeriodModal = function(id) {
+  const name = periods.find(p => p.id === id)?.name ?? "";
   openModal(`
     <h2>Close &amp; Start New Period</h2>
     <p style="font-size:.9rem; color:var(--hub-text-muted,#6b7280); margin-bottom:18px;">
@@ -1090,30 +1095,33 @@ window.openClosePeriodModal = function(id, name) {
     </div>
     <div class="modal-actions">
       <button class="btn-secondary" onclick="closeModal()">Cancel</button>
-      <button class="btn-primary" id="close-period-btn" onclick="submitClosePeriod('${esc(id)}', '${esc(name)}')">Close &amp; Start New</button>
+      <button class="btn-primary" id="close-period-btn" data-period-id="${esc(id)}" onclick="submitClosePeriod()">Close &amp; Start New</button>
     </div>
   `);
   setTimeout(() => document.getElementById("f-new-period-name")?.focus(), 50);
 };
 
-window.submitClosePeriod = async function(oldId, oldName) {
+window.submitClosePeriod = async function() {
+  const btn = document.getElementById("close-period-btn");
+  const oldId = btn.dataset.periodId;
+  const oldName = periods.find(p => p.id === oldId)?.name ?? "";
   const newName = document.getElementById("f-new-period-name").value.trim();
   if (!newName) { document.getElementById("f-new-period-name").focus(); return; }
 
-  const btn = document.getElementById("close-period-btn");
   btn.disabled = true;
   btn.textContent = "Saving…";
 
   try {
     const now = new Date().toISOString();
-    await Promise.all([
-      db(`UPDATE app_points_recognition__pr_periods SET is_active = 0, closed_at = ? WHERE id = ?`, [now, oldId]),
-      db(
-        `INSERT INTO app_points_recognition__pr_periods (id, name, started_at, is_active, created_at, created_by)
-         VALUES (?, ?, ?, 1, ?, ?)`,
-        [crypto.randomUUID(), newName, now, now, ME?.id ?? ""]
-      ),
-    ]);
+    // INSERT the new period first — if it fails, the old period stays active.
+    // If the UPDATE then fails we have two active periods, which is recoverable;
+    // the reverse order would leave no active period at all.
+    await db(
+      `INSERT INTO app_points_recognition__pr_periods (id, name, started_at, is_active, created_at, created_by)
+       VALUES (?, ?, ?, 1, ?, ?)`,
+      [crypto.randomUUID(), newName, now, now, ME?.id ?? ""]
+    );
+    await db(`UPDATE app_points_recognition__pr_periods SET is_active = 0, closed_at = ? WHERE id = ?`, [now, oldId]);
     await loadPeriods();
     activePeriod = periods.find(p => p.is_active === 1) ?? null;
     selectedPeriodId = activePeriod?.id ?? null;
