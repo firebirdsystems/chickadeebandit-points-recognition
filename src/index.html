@@ -351,6 +351,7 @@
 
 <!-- ── Leaderboard tab ── -->
 <div id="view-leaderboard" class="view active">
+  <div class="card" id="officers-notice" style="display:none;margin-bottom:10px"></div>
   <div class="controls-row">
     <select id="period-select" onchange="onPeriodChange()"></select>
     <select id="category-select" onchange="renderLeaderboard()">
@@ -371,20 +372,32 @@
 
 <!-- ── Admin tab ── -->
 <div id="view-admin" class="view">
-  <div class="card">
-    <div class="card-title">Award Points</div>
-    <button class="btn-primary" onclick="openAwardModal()">+ Award Points to a Member</button>
-  </div>
-  <div class="card">
+  <div class="card" id="officers-config-card" style="display:none">
     <div class="admin-section-header">
-      <div class="card-title">Categories</div>
-      <button class="btn-small" onclick="openCategoryModal(null)">+ Add</button>
+      <div class="card-title">Officers Group</div>
+      <button class="btn-small" onclick="openOfficersConfig()">Configure</button>
     </div>
-    <div id="admin-categories-list"></div>
+    <div id="officers-config-summary" style="font-size:.85rem;color:var(--hub-text-muted,#6b7280)"></div>
   </div>
-  <div class="card">
-    <div class="card-title">Periods</div>
-    <div id="admin-periods-content"></div>
+  <div id="officer-tools" style="display:none">
+    <div class="card">
+      <div class="card-title">Award Points</div>
+      <button class="btn-primary" onclick="openAwardModal()">+ Award Points to a Member</button>
+    </div>
+    <div class="card">
+      <div class="admin-section-header">
+        <div class="card-title">Categories</div>
+        <button class="btn-small" onclick="openCategoryModal(null)">+ Add</button>
+      </div>
+      <div id="admin-categories-list"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Periods</div>
+      <div id="admin-periods-content"></div>
+    </div>
+  </div>
+  <div class="card" id="officer-tools-locked" style="display:none">
+    <p style="font-size:.9rem">You're not a member of the officers group, so you can't award points or manage categories and periods. An admin manages officers in the hub's group settings.</p>
   </div>
 </div>
 
@@ -392,16 +405,20 @@
 
 <script type="module">
 import { esc, memberColor, initial, isAdult, hubConfirm, formatRelativeDate } from "/hub-sdk.js";
-import { buildLeaderboard, memberTotal, rankLabel, canAwardPoints } from "./logic.js";
+import { buildLeaderboard, memberTotal, rankLabel } from "./logic.js";
 
 const CONTEXT = window.__CONTEXT_URL ?? "";
 const DB      = window.__DB_URL      ?? "";
 const ME      = window.__CURRENT_MEMBER ?? null;
 const APP_ID  = window.__APP_ID ?? "points-recognition";
 const EVENTS_URL = window.__EVENTS_URL ?? "/api/events";
+const ADMIN_CONFIG = window.__ADMIN_CONFIG_URL ?? "";
+const IS_ADMIN = !!ME?.isAdmin;
 
 // ── State ──────────────────────────────────────────────────────────────────────
 let members = [];
+let groups = [];            // family.groups [{ id, name, memberIds }]
+let officersGroupId = "";   // configured officers group — gates all writes server-side
 let periods = [];
 let categories = [];
 let awards = [];      // awards for the period shown in leaderboard
@@ -411,6 +428,17 @@ let selectedPeriodId = null;
 let currentTab = "leaderboard";
 let modalEl = null;
 const selectedIcon = { value: "⭐" };
+
+// Awarding points and managing categories/periods require membership in the
+// configured officers group — the same thing the server row policies enforce
+// (admin status alone does NOT satisfy a row policy). Configuring which group is
+// the officers group is separate and admin-only (openOfficersConfig).
+function amIOfficer() {
+  if (!DB) return true; // demo mode
+  if (!officersGroupId || !ME) return false;
+  const g = groups.find(g => g.id === officersGroupId);
+  return !!g && g.memberIds.includes(ME.id);
+}
 
 // ── DB helper ──────────────────────────────────────────────────────────────────
 async function db(sql, params = []) {
@@ -463,23 +491,42 @@ async function init() {
     await loadMembers();
     loadDemoData();
   } else {
-    await Promise.all([loadMembers(), loadPeriods(), loadCategories()]);
+    await Promise.all([loadMembers(), loadGroups(), loadSettings(), loadPeriods(), loadCategories()]);
     activePeriod = periods.find(p => p.is_active === 1) ?? null;
     selectedPeriodId = activePeriod?.id ?? periods[0]?.id ?? null;
-    if (categories.length === 0 && canAwardPoints(ME)) await seedDefaultCategories();
+    if (categories.length === 0 && amIOfficer()) await seedDefaultCategories();
     await Promise.all([
       loadAwardsForPeriod(selectedPeriodId),
       loadAllAwards(),
     ]);
   }
 
-  if (canAwardPoints(ME)) {
+  // Admin tab is visible to officers (who manage awards) and to admins (who
+  // configure which group the officers are — the bootstrap).
+  if (amIOfficer() || IS_ADMIN) {
     document.getElementById("admin-tab-btn").style.display = "";
   }
 
   renderPeriodSelect();
   renderCategorySelect();
   renderLeaderboard();
+  renderOfficersNotice();
+}
+
+async function loadGroups() {
+  if (!CONTEXT) return;
+  try {
+    const res = await fetch(`${CONTEXT}?keys=family.groups`);
+    groups = ((await res.json())["family.groups"]) ?? [];
+  } catch { groups = []; }
+}
+
+async function loadSettings() {
+  if (!DB) return;
+  try {
+    const { rows } = await db("SELECT value FROM app_points_recognition__pr_settings WHERE key = 'officers_group_id'");
+    officersGroupId = rows?.[0]?.value ?? "";
+  } catch { officersGroupId = ""; }
 }
 
 // ── Members ────────────────────────────────────────────────────────────────────
@@ -502,29 +549,35 @@ async function loadCategories() {
   categories = rows;
 }
 
+// Enrich an award with category/period names from already-loaded state. We no
+// longer JOIN pr_categories/pr_periods in SQL: all three tables are now governed
+// by row policies, and the policy rewriter must not span multiple governed
+// tables in one statement (it mis-binds params across a JOIN). Each governed
+// table is queried on its own and stitched together client-side.
+function enrichAward(a) {
+  const c = categories.find(c => c.id === a.category_id);
+  const p = periods.find(p => p.id === a.period_id);
+  return { ...a, category_name: c?.name ?? "", category_icon: c?.icon ?? "⭐", period_name: p?.name ?? "" };
+}
+
 async function loadAwardsForPeriod(periodId) {
   if (!periodId) { awards = []; return; }
   const { rows } = await db(
-    `SELECT a.*, c.name as category_name, c.icon as category_icon
-     FROM app_points_recognition__pr_awards a
-     JOIN app_points_recognition__pr_categories c ON c.id = a.category_id
-     WHERE a.period_id = ?
-     ORDER BY a.awarded_at DESC`,
+    `SELECT * FROM app_points_recognition__pr_awards
+     WHERE period_id = ?
+     ORDER BY awarded_at DESC`,
     [periodId]
   );
-  awards = rows;
+  awards = (rows ?? []).map(enrichAward);
 }
 
 async function loadAllAwards() {
   const { rows } = await db(
-    `SELECT a.*, c.name as category_name, c.icon as category_icon, p.name as period_name
-     FROM app_points_recognition__pr_awards a
-     JOIN app_points_recognition__pr_categories c ON c.id = a.category_id
-     JOIN app_points_recognition__pr_periods p ON p.id = a.period_id
-     ORDER BY a.awarded_at DESC
+    `SELECT * FROM app_points_recognition__pr_awards
+     ORDER BY awarded_at DESC
      LIMIT 2000`
   );
-  allAwards = rows;
+  allAwards = (rows ?? []).map(enrichAward);
 }
 
 async function seedDefaultCategories() {
@@ -691,9 +744,73 @@ function renderMyPoints() {
 
 // ── Admin ──────────────────────────────────────────────────────────────────────
 function renderAdmin() {
-  renderAdminCategories();
-  renderAdminPeriods();
+  const officer = amIOfficer();
+  // Officer config card: admin-only (the bootstrap — who appoints the officers).
+  const cfgCard = document.getElementById("officers-config-card");
+  cfgCard.style.display = IS_ADMIN ? "" : "none";
+  if (IS_ADMIN) {
+    const g = groups.find(g => g.id === officersGroupId);
+    document.getElementById("officers-config-summary").textContent = g
+      ? `Officers group: ${g.name}. Members of this group may award points and manage categories/periods.`
+      : "No officers group configured yet — awarding is disabled for everyone until you pick one.";
+  }
+  document.getElementById("officer-tools").style.display = officer ? "" : "none";
+  document.getElementById("officer-tools-locked").style.display = (!officer && !IS_ADMIN) ? "" : "none";
+  if (officer) {
+    renderAdminCategories();
+    renderAdminPeriods();
+  }
 }
+
+// Read-only notice on the leaderboard when no officers group is configured yet.
+function renderOfficersNotice() {
+  const el = document.getElementById("officers-notice");
+  if (!el) return;
+  if (!DB || officersGroupId) { el.style.display = "none"; return; }
+  el.style.display = "";
+  el.innerHTML = IS_ADMIN
+    ? `<p style="font-size:.9rem">No officers group configured yet — point awarding is disabled. Open the <b>Admin</b> tab to choose which member group acts as officers.</p>`
+    : `<p style="font-size:.9rem">This leaderboard is read-only until an admin configures the officers group.</p>`;
+}
+
+// ── Officers group configuration (admin-only; writes officers_group_id via the
+//    admin-config endpoint, the only writer the app_config policy permits) ──
+window.openOfficersConfig = function() {
+  if (!IS_ADMIN) return;
+  const opts = groups.map(g => `<option value="${esc(g.id)}"${g.id === officersGroupId ? " selected" : ""}>${esc(g.name)}</option>`).join("");
+  openModal(`
+    <h2>Configure Officers Group</h2>
+    <div class="form-group">
+      <label for="oc-group">Officers group</label>
+      <select id="oc-group">
+        <option value="">— none —</option>
+        ${opts}
+      </select>
+      <p style="font-size:.75rem;color:var(--hub-text-muted,#6b7280);margin-top:6px">Members of this group may award points and manage categories and periods. Manage group membership in the hub's member settings.</p>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveOfficersConfig()">Save</button>
+    </div>
+  `);
+};
+
+window.saveOfficersConfig = async function() {
+  const groupId = document.getElementById("oc-group").value;
+  try {
+    const res = await fetch(ADMIN_CONFIG, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: "officers_group_id", value: groupId }),
+    });
+    if (!res.ok) { let m = "Save failed"; try { m = (await res.json()).error ?? m; } catch {} throw new Error(m); }
+    officersGroupId = groupId;
+    closeModal();
+    document.getElementById("admin-tab-btn").style.display = (amIOfficer() || IS_ADMIN) ? "" : "none";
+    renderAdmin();
+    renderOfficersNotice();
+    showToast("Officers group updated");
+  } catch (e) { showToast(e.message ?? "Save failed"); }
+};
 
 function renderAdminCategories() {
   const el = document.getElementById("admin-categories-list");
@@ -1175,7 +1292,7 @@ document.querySelectorAll(".tab-nav button").forEach(btn => {
 // ── Deep link ─────────────────────────────────────────────────────────────────
 function handleDeepLink() {
   const tab = new URLSearchParams(window.location.search).get("tab");
-  if (tab === "admin" && canAwardPoints(ME)) switchTab("admin");
+  if (tab === "admin" && (amIOfficer() || IS_ADMIN)) switchTab("admin");
   else if (tab === "mypoints") switchTab("mypoints");
 }
 

@@ -1,14 +1,14 @@
 {
   "id": "points-recognition",
   "name": "Points & Recognition",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Award points to members for participation, attendance, and volunteering. Live leaderboard with per-period resets — a social currency system for org engagement.",
   "entrypoint": "index.html",
   "runtime": "static",
   "category": "organization",
   "tags": ["org", "recognition", "points", "leaderboard", "engagement"],
   "data_access": {
-    "reads": ["family.members"],
+    "reads": ["family.members", "family.groups"],
     "writes": []
   },
   "permissions": {
@@ -17,9 +17,35 @@
   },
   "storage": "db",
   "row_policies": {
-    "pr_awards":     { "kind": "adult_writable" },
-    "pr_categories": { "kind": "adult_writable" },
-    "pr_periods":    { "kind": "adult_writable" }
+    "pr_settings": { "kind": "app_config" },
+    "pr_awards": {
+      "kind": "owner_or_visibility",
+      "member_column": "awarded_by",
+      "visibility_column": "visibility",
+      "everyone_values": ["everyone"],
+      "write_privileged_only": true,
+      "bypass_group_setting": { "settings_table": "pr_settings", "settings_key": "officers_group_id" }
+    },
+    "pr_categories": {
+      "kind": "owner_or_visibility",
+      "member_column": "created_by",
+      "visibility_column": "visibility",
+      "everyone_values": ["everyone"],
+      "write_privileged_only": true,
+      "bypass_group_setting": { "settings_table": "pr_settings", "settings_key": "officers_group_id" }
+    },
+    "pr_periods": {
+      "kind": "owner_or_visibility",
+      "member_column": "created_by",
+      "visibility_column": "visibility",
+      "everyone_values": ["everyone"],
+      "write_privileged_only": true,
+      "bypass_group_setting": { "settings_table": "pr_settings", "settings_key": "officers_group_id" }
+    }
+  },
+  "admin_config": {
+    "settings_table": "pr_settings",
+    "keys": ["officers_group_id"]
   },
   "icon": "⭐",
   "nav": { "label": "Points" },
