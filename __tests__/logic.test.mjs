@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { buildLeaderboard, memberTotal, rankLabel, canAwardPoints } from "../src/logic.js";
+import { testPrivilegedGateContract } from "./helpers/privileged-gate.mjs";
 
 const MEMBERS = [
   { id: "m1", name: "Alice", role: "adult" },
@@ -111,22 +112,14 @@ describe("rankLabel", () => {
 });
 
 // ── canAwardPoints ────────────────────────────────────────────────────────────
+// Fronts the pr_awards / pr_categories / pr_periods write_privileged_only
+// policies (officers_group_id), so it must satisfy the shared privileged-gate
+// contract (mirrors the hub: officer-group membership, NOT adult role; no
+// fallback when no officers group is configured).
 
-describe("canAwardPoints", () => {
-  it("returns true for adults", () => {
-    expect(canAwardPoints({ role: "adult" })).toBe(true);
-  });
-
-  it("returns false for children", () => {
-    expect(canAwardPoints({ role: "child" })).toBe(false);
-  });
-
-  it("returns false for null or undefined ME", () => {
-    expect(canAwardPoints(null)).toBe(false);
-    expect(canAwardPoints(undefined)).toBe(false);
-  });
-
-  it("returns false for an unknown role", () => {
-    expect(canAwardPoints({ role: "guest" })).toBe(false);
-  });
+testPrivilegedGateContract("canAwardPoints", canAwardPoints, {
+  member:   { id: "a1", role: "adult" },
+  outsider: { id: "a3", role: "adult" },
+  groups:   [{ id: "g1", memberIds: ["a1", "a2"] }],
+  groupId:  "g1",
 });

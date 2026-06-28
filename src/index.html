@@ -405,7 +405,7 @@
 
 <script type="module">
 import { esc, memberColor, initial, isAdult, hubConfirm, formatRelativeDate } from "/hub-sdk.js";
-import { buildLeaderboard, memberTotal, rankLabel } from "./logic.js";
+import { buildLeaderboard, memberTotal, rankLabel, canAwardPoints as _canAwardPoints } from "./logic.js";
 
 const CONTEXT = window.__CONTEXT_URL ?? "";
 const DB      = window.__DB_URL      ?? "";
@@ -435,9 +435,7 @@ const selectedIcon = { value: "⭐" };
 // the officers group is separate and admin-only (openOfficersConfig).
 function amIOfficer() {
   if (!DB) return true; // demo mode
-  if (!officersGroupId || !ME) return false;
-  const g = groups.find(g => g.id === officersGroupId);
-  return !!g && g.memberIds.includes(ME.id);
+  return _canAwardPoints(ME, groups, officersGroupId);
 }
 
 // ── DB helper ──────────────────────────────────────────────────────────────────

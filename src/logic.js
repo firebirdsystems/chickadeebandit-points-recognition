@@ -34,8 +34,23 @@ export function rankLabel(index) {
 }
 
 /**
- * Whether the given member can award points (adults only).
+ * Whether `me` may award points and manage categories/periods. Mirrors the
+ * server-side `write_privileged_only` policy on pr_awards / pr_categories /
+ * pr_periods, gated by the configured officers group (officers_group_id).
+ *
+ * MUST match the hub's privileged resolution exactly: privileged IFF the
+ * officers group is configured, still exists, and the member is in it. There is
+ * NO "all adults" fallback — the previous `me.role === "adult"` check diverged
+ * from the server (which gates on group membership, not role), so an adult not in
+ * the officers group, or any adult when no group is configured, would see award
+ * controls that silently 403. See __tests__/helpers/privileged-gate.mjs.
+ *
+ * @param {object|null} me
+ * @param {Array}  groups
+ * @param {string|null} officersGroupId
  */
-export function canAwardPoints(me) {
-  return me?.role === "adult";
+export function canAwardPoints(me, groups, officersGroupId) {
+  if (!me || !officersGroupId) return false;
+  const g = (groups ?? []).find(g => g.id === officersGroupId);
+  return !!g && g.memberIds.includes(me.id);
 }
