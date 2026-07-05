@@ -24,7 +24,7 @@
       "visibility_column": "visibility",
       "everyone_values": ["everyone"],
       "write_privileged_only": true,
-      "bypass_group_setting": { "settings_table": "pr_settings", "settings_key": "officers_group_id" }
+      "privileged_groups": [{ "settings_table": "pr_settings", "settings_key": "officers_group_id" }]
     },
     "pr_categories": {
       "kind": "owner_or_visibility",
@@ -32,7 +32,7 @@
       "visibility_column": "visibility",
       "everyone_values": ["everyone"],
       "write_privileged_only": true,
-      "bypass_group_setting": { "settings_table": "pr_settings", "settings_key": "officers_group_id" }
+      "privileged_groups": [{ "settings_table": "pr_settings", "settings_key": "officers_group_id" }]
     },
     "pr_periods": {
       "kind": "owner_or_visibility",
@@ -40,7 +40,7 @@
       "visibility_column": "visibility",
       "everyone_values": ["everyone"],
       "write_privileged_only": true,
-      "bypass_group_setting": { "settings_table": "pr_settings", "settings_key": "officers_group_id" }
+      "privileged_groups": [{ "settings_table": "pr_settings", "settings_key": "officers_group_id" }]
     }
   },
   "admin_config": {
