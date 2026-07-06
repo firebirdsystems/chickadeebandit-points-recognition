@@ -821,8 +821,8 @@ function renderAdminCategories() {
       <div class="cat-icon">${esc(c.icon)}</div>
       <div class="cat-name">${esc(c.name)}</div>
       <div class="cat-actions">
-        <button class="btn-small" onclick="openCategoryModal('${esc(c.id)}')">Edit</button>
-        <button class="btn-small danger" onclick="deleteCategory('${esc(c.id)}')">Delete</button>
+        <button class="btn-small" data-cat-id="${esc(c.id)}" onclick="openCategoryModal(this.dataset.catId)">Edit</button>
+        <button class="btn-small danger" data-cat-id="${esc(c.id)}" onclick="deleteCategory(this.dataset.catId)">Delete</button>
       </div>
     </div>
   `).join("");
@@ -852,8 +852,8 @@ function renderAdminPeriods() {
         <div class="period-name">🟢 ${esc(active.name)}</div>
         <div class="period-meta">Started ${startDate} · ${awardCount} award${awardCount === 1 ? "" : "s"}</div>
         <div class="period-actions">
-          <button class="btn-small" onclick="openRenamePeriodModal('${esc(active.id)}')">Rename</button>
-          <button class="btn-small danger" onclick="openClosePeriodModal('${esc(active.id)}')">Close &amp; Start New</button>
+          <button class="btn-small" data-period-id="${esc(active.id)}" onclick="openRenamePeriodModal(this.dataset.periodId)">Rename</button>
+          <button class="btn-small danger" data-period-id="${esc(active.id)}" onclick="openClosePeriodModal(this.dataset.periodId)">Close &amp; Start New</button>
         </div>
       </div>
     `;
@@ -1026,7 +1026,7 @@ window.openCategoryModal = function(existingId) {
     </div>
     <div class="modal-actions">
       <button class="btn-secondary" onclick="closeModal()">Cancel</button>
-      <button class="btn-primary" id="cat-submit-btn" onclick="submitCategory('${esc(existingId ?? "")}')">${existing ? "Save" : "Create"}</button>
+      <button class="btn-primary" id="cat-submit-btn" data-cat-id="${esc(existingId ?? "")}" onclick="submitCategory(this.dataset.catId)">${existing ? "Save" : "Create"}</button>
     </div>
   `);
   setTimeout(() => document.getElementById("f-cat-name")?.focus(), 50);
@@ -1163,7 +1163,7 @@ window.openRenamePeriodModal = function(id) {
     </div>
     <div class="modal-actions">
       <button class="btn-secondary" onclick="closeModal()">Cancel</button>
-      <button class="btn-primary" id="rename-submit-btn" onclick="submitRenamePeriod('${esc(id)}')">Save</button>
+      <button class="btn-primary" id="rename-submit-btn" data-period-id="${esc(id)}" onclick="submitRenamePeriod(this.dataset.periodId)">Save</button>
     </div>
   `);
   setTimeout(() => {
