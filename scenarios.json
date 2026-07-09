@@ -1,0 +1,28 @@
+{
+  "scenarios": [
+    {
+      "name": "awards, categories and periods are writable only by the privileged group",
+      "members": { "member": "adult" },
+      "steps": [
+        {
+          "action": "db",
+          "as": "member",
+          "sql": "UPDATE app_points_recognition__pr_awards SET visibility = 'everyone'",
+          "expect": { "status": 403 }
+        },
+        {
+          "action": "db",
+          "as": "member",
+          "sql": "UPDATE app_points_recognition__pr_categories SET visibility = 'everyone'",
+          "expect": { "status": 403 }
+        },
+        {
+          "action": "db",
+          "as": "member",
+          "sql": "DELETE FROM app_points_recognition__pr_periods",
+          "expect": { "status": 403 }
+        }
+      ]
+    }
+  ]
+}
