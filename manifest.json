@@ -1,5 +1,6 @@
 {
   "id": "points-recognition",
+  "contexts": ["household", "shared_space"],
   "name": "Points & Recognition",
   "version": "1.1.0",
   "description": "Award points to members for participation, attendance, and volunteering. Live leaderboard with per-period resets — a social currency system for org engagement.",
