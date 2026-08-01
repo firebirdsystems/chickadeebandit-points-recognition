@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildLeaderboard, memberTotal, rankLabel, canAwardPoints } from "../src/logic.js";
+import { buildLeaderboard, memberTotal, rankLabel, canAwardPoints, searchableFields } from "../src/logic.js";
 import { testPrivilegedGateContract } from "./helpers/privileged-gate.mjs";
 
 const MEMBERS = [
@@ -122,4 +122,12 @@ testPrivilegedGateContract("canAwardPoints", canAwardPoints, {
   outsider: { id: "a3", role: "adult" },
   groups:   [{ id: "g1", memberIds: ["a1", "a2"] }],
   groupId:  "g1",
+});
+
+describe("searchableFields", () => {
+  it("matches on the award note — the reason someone was recognised", () => {
+    const fields = searchableFields({ note: "stayed late to set up the hall", category_name: "Service", period_name: "Spring" });
+    expect(fields).toContain("stayed late to set up the hall");
+    expect(fields).toContain("Service");
+  });
 });

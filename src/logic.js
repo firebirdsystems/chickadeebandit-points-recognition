@@ -54,3 +54,12 @@ export function canAwardPoints(me, groups, officersGroupId) {
   const g = (groups ?? []).find(g => g.id === officersGroupId);
   return !!g && g.memberIds.includes(me.id);
 }
+
+/**
+ * Fields the in-app search matches against (see hub-sdk `searchMatch`).
+ * The note is why someone was recognised — the whole point of the
+ * award — so it is searchable alongside the category it was filed under.
+ */
+export function searchableFields(item) {
+  return [item.note, item.category_name, item.period_name];
+}
