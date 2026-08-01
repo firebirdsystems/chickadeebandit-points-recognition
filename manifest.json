@@ -17,6 +17,78 @@
     "requires_approval": false
   },
   "storage": "db",
+  "db_plaintext_columns": ["is_active"],
+  "automation_actions": {
+    "award": {
+      "title": "Award points to a member",
+      "description": "Give someone points in the open period when another app's event fires — a chore completed, a streak or habit milestone reached.",
+      "params": {
+        "member_id": { "type": "member", "label": "Who earns the points", "required": true },
+        "points": { "type": "integer", "label": "Points", "required": true, "min": 1 },
+        "note": { "type": "text", "label": "Note", "default": "Awarded by an automation" }
+      },
+      "dedupe": { "table": "pr_awards", "column": "source_event_id" },
+      "steps": [
+        {
+          "op": "lookup",
+          "table": "pr_periods",
+          "where": { "is_active": "1" },
+          "bind": { "period_id": "id" },
+          "on_missing": "skip"
+        },
+        {
+          "op": "insert",
+          "table": "pr_awards",
+          "values": {
+            "id": "$uuid",
+            "period_id": ":period_id",
+            "category_id": "automation",
+            "member_id": ":member_id",
+            "points": ":points",
+            "note": ":note",
+            "awarded_by": "automation",
+            "awarded_at": "$now",
+            "source_event_id": "$event_id"
+          }
+        }
+      ]
+    }
+  },
+  "suggested_automations": [
+    {
+      "title": "Award points when a chore is completed",
+      "description": "Every completed chore pays its point value into the open recognition period. Adjust the factor to change what a chore point is worth here.",
+      "trigger_event": "chore.completed",
+      "target_app_id": "points-recognition",
+      "action_id": "award",
+      "param_map": {
+        "member_id": { "kind": "payload_field", "value": "member_id" },
+        "points": { "kind": "scaled_field", "value": "points", "factor": 1 }
+      }
+    },
+    {
+      "title": "Award points for a streak milestone",
+      "description": "Hitting a streak milestone awards one point per day of the streak, so the longer runs are worth more.",
+      "trigger_event": "streak.milestone",
+      "target_app_id": "points-recognition",
+      "action_id": "award",
+      "param_map": {
+        "member_id": { "kind": "subject_id" },
+        "points": { "kind": "scaled_field", "value": "days", "factor": 1 }
+      }
+    },
+    {
+      "title": "Award points for a habit milestone",
+      "description": "A habit milestone awards one point per completion counted, recognising the quiet consistency nobody else sees.",
+      "trigger_event": "habit.milestone",
+      "target_app_id": "points-recognition",
+      "action_id": "award",
+      "param_map": {
+        "member_id": { "kind": "subject_id" },
+        "points": { "kind": "scaled_field", "value": "count", "factor": 1 }
+      }
+    }
+  ],
   "row_policies": {
     "pr_settings": { "kind": "app_config" },
     "pr_awards": {
