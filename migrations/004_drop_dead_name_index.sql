@@ -1,0 +1,12 @@
+-- `idx_pr_categories_name` was a UNIQUE index on an ENCRYPTED column, so it
+-- could never fire: every write stores `v1:<iv>:<tag>:<ct>` with a random IV, and
+-- two rows spelled "Attendance" are two different ciphertexts. It read as a
+-- uniqueness guarantee while providing none — which is how concurrent seeding
+-- produced duplicate categories (fixed separately by seeding with deterministic
+-- ids so the PRIMARY KEY does the deduping).
+--
+-- Dropped rather than made real: `name` is user prose and stays encrypted, and
+-- the app has not depended on this index since the seed fix. Admission now
+-- rejects a UNIQUE constraint over an encrypted column, so leaving a dead one in
+-- the schema would block publishing.
+DROP INDEX IF EXISTS idx_pr_categories_name;
