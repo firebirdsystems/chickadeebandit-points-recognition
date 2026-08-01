@@ -49,6 +49,15 @@
     "keys": ["officers_group_id"]
   },
   "icon": "⭐",
+  "member_references": {
+    "pr_periods": { "column": "created_by", "on_removed": "keep" },
+    "pr_categories": { "column": "created_by", "on_removed": "keep" },
+    "pr_awards": [
+      { "column": "member_id", "on_removed": "delete" },
+      { "column": "awarded_by", "on_removed": "keep" }
+    ]
+  },
+  "resource_limits": { "max_db_bytes": 52428800 },
   "nav": { "label": "Points" },
   "widget": { "label": "Top Members", "size": "small" },
   "ai_access": {

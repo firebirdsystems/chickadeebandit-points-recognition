@@ -449,6 +449,23 @@ async function db(sql, params = []) {
   return res.json();
 }
 
+// Atomic multi-statement form of /api/db. Deleting a category also deletes the
+// awards given under it; issued as two independent round trips, a failure on
+// the second left every award with a dangling category_id — rendered with a
+// blank category name and still counting toward the leaderboard. D1 runs a
+// batch transactionally, so it lands whole or not at all.
+async function dbBatch(statements) {
+  if (!DB || !statements.length) return [];
+  const res = await fetch(DB, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ statements }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok || body.error) throw new Error(body?.error ?? `batch failed (${res.status})`);
+  return body.results ?? [];
+}
+
 // ── Demo data ──────────────────────────────────────────────────────────────────
 function loadDemoData() {
   members = [
@@ -578,19 +595,25 @@ async function loadAllAwards() {
   allAwards = (rows ?? []).map(enrichAward);
 }
 
+// Seeding is idempotent through the PRIMARY KEY, not through the UNIQUE index
+// on `name`. `name` is encrypted at rest with a random IV, so two rows spelled
+// "Attendance" never collide and `idx_pr_categories_name` can never fire —
+// with random UUIDs here, two officers opening the app at the same moment both
+// saw zero categories and both seeded, leaving eight and splitting awards
+// across the duplicates. Fixed ids make INSERT OR IGNORE dedupe for real.
 async function seedDefaultCategories() {
   const defaults = [
-    { name: "Attendance", icon: "📋" },
-    { name: "Service", icon: "🤝" },
-    { name: "Volunteering", icon: "💪" },
-    { name: "Leadership", icon: "⭐" },
+    { id: "seed-attendance",   name: "Attendance",   icon: "📋" },
+    { id: "seed-service",      name: "Service",      icon: "🤝" },
+    { id: "seed-volunteering", name: "Volunteering", icon: "💪" },
+    { id: "seed-leadership",   name: "Leadership",   icon: "⭐" },
   ];
   const now = new Date().toISOString();
   await Promise.all(defaults.map(cat =>
     db(
       `INSERT OR IGNORE INTO app_points_recognition__pr_categories (id, name, icon, description, created_at, created_by)
        VALUES (?, ?, ?, '', ?, 'system')`,
-      [crypto.randomUUID(), cat.name, cat.icon, now]
+      [cat.id, cat.name, cat.icon, now]
     )
   ));
   await loadCategories();
@@ -1095,9 +1118,11 @@ window.deleteCategory = async function(id) {
   });
   if (!ok) return;
 
-  await Promise.all([
-    db(`DELETE FROM app_points_recognition__pr_categories WHERE id = ?`, [id]),
-    db(`DELETE FROM app_points_recognition__pr_awards WHERE category_id = ?`, [id]),
+  // Awards first, then the category, in one transactional batch — either the
+  // whole deletion lands or none of it does.
+  await dbBatch([
+    { sql: `DELETE FROM app_points_recognition__pr_awards WHERE category_id = ?`, params: [id] },
+    { sql: `DELETE FROM app_points_recognition__pr_categories WHERE id = ?`, params: [id] },
   ]);
   await Promise.all([loadCategories(), loadAwardsForPeriod(selectedPeriodId), loadAllAwards()]);
   renderCategorySelect();
