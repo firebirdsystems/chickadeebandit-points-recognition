@@ -89,6 +89,29 @@
       }
     }
   ],
+  "glance": {
+    "source": {
+      "kind": "sql",
+      "query": "SELECT COALESCE(SUM(a.points), 0) AS value FROM app_points_recognition__pr_awards a JOIN app_points_recognition__pr_periods p ON p.id = a.period_id AND p.is_active = 1 WHERE a.member_id = :me LIMIT 1"
+    },
+    "display": {
+      "template": "stat",
+      "value": "value",
+      "label": "points this period",
+      "empty_hides": true
+    }
+  },
+  "publishes": [
+    "recognition.award_given"
+  ],
+  "publish_acls": {
+    "recognition.award_given": {
+      "require_group_setting": {
+        "settings_table": "pr_settings",
+        "settings_key": "officers_group_id"
+      }
+    }
+  },
   "row_policies": {
     "pr_settings": { "kind": "app_config" },
     "pr_awards": {

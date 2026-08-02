@@ -420,6 +420,21 @@ const ME      = window.__CURRENT_MEMBER ?? null;
 const APP_ID  = window.__APP_ID ?? "points-recognition";
 const EVENTS_URL = window.__EVENTS_URL ?? "/api/events";
 const ADMIN_CONFIG = window.__ADMIN_CONFIG_URL ?? "";
+
+// Best-effort: the row is already written, so a failed publish is not fatal.
+async function publishEvent(type, subjectId, payload = {}) {
+  if (!EVENTS_URL) return;
+  try {
+    await fetch(EVENTS_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type, subject_id: subjectId, payload }),
+    });
+  } catch {
+    // ignored on purpose
+  }
+}
+
 const IS_ADMIN = !!ME?.isAdmin;
 
 // ── State ──────────────────────────────────────────────────────────────────────
@@ -1019,6 +1034,12 @@ window.submitAward = async function() {
       `${cat?.icon ?? "⭐"} ${cat?.name ?? "Points"}: ${note || "No note"}`
     ).catch(() => {});
     logActivity(id, memberId, pointsVal, cat?.name ?? "").catch(() => {});
+    await publishEvent("recognition.award_given", id, {
+      member_id: memberId,
+      points: pointsVal,
+      category: cat?.name ?? "",
+      period_id: activePeriod.id,
+    });
   } catch (e) {
     console.error(e);
     awards    = awards.filter(a => a.id !== id);
