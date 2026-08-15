@@ -360,13 +360,13 @@
 <div id="view-leaderboard" class="view active">
   <div class="card" id="officers-notice" style="display:none;margin-bottom:10px"></div>
   <div class="controls-row">
-    <select id="period-select" onchange="onPeriodChange()"></select>
-    <select id="category-select" onchange="renderLeaderboard()">
+    <select id="period-select" data-testid="period-select" onchange="onPeriodChange()"></select>
+    <select id="category-select" data-testid="category-select" onchange="renderLeaderboard()">
       <option value="">All Categories</option>
     </select>
   </div>
   <div class="card" id="leaderboard-card">
-    <div id="leaderboard-list">
+    <div id="leaderboard-list" data-testid="leaderboard-list">
       <div class="empty-state"><div class="empty-icon">⭐</div><p>Loading…</p></div>
     </div>
   </div>
@@ -709,15 +709,16 @@ function renderLeaderboard() {
   list.innerHTML = ranked.map(({ member, points }, i) => {
     const color = memberColor(member.id, members);
     return `
-      <div class="lb-row">
+      <div class="lb-row" data-testid="lb-row" data-member-id="${esc(member.id)}">
         <div class="lb-rank">${rankLabel(i)}</div>
         <span class="member-avatar" style="background:${color}">${esc(initial(member.name))}</span>
-        <div class="lb-name">${esc(member.name)}</div>
-        <div><span class="lb-points">${points.toLocaleString()}</span><span class="lb-pts-label">pts</span></div>
+        <div class="lb-name" data-testid="lb-name">${esc(member.name)}</div>
+        <div><span class="lb-points" data-testid="lb-points">${points.toLocaleString()}</span><span class="lb-pts-label">pts</span></div>
       </div>
     `;
   }).join("");
 }
+window.renderLeaderboard = renderLeaderboard;
 
 // ── My Points ──────────────────────────────────────────────────────────────────
 // Only the My Points pane is redrawn, so the search box keeps focus.

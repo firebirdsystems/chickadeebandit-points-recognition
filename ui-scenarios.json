@@ -1,0 +1,121 @@
+{
+  "scenarios": [
+    {
+      "name": "the category filter narrows the rendered leaderboard to that category's awards",
+      "members": {
+        "owner": "adult",
+        "other": "adult"
+      },
+      "steps": [
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_points_recognition__pr_periods (id, name, started_at, is_active, created_at, created_by, visibility) VALUES (?, ?, datetime('now'), 1, datetime('now'), ?, 'everyone')",
+          "params": [
+            "ui-period",
+            "Spring Term",
+            "{{owner}}"
+          ]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_points_recognition__pr_categories (id, name, icon, description, created_at, created_by, visibility) VALUES (?, ?, '\u2b50', '', datetime('now'), ?, 'everyone')",
+          "params": [
+            "ui-cat-a",
+            "Kindness",
+            "{{owner}}"
+          ]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_points_recognition__pr_categories (id, name, icon, description, created_at, created_by, visibility) VALUES (?, ?, '\ud83d\udcda', '', datetime('now'), ?, 'everyone')",
+          "params": [
+            "ui-cat-b",
+            "Scholarship",
+            "{{owner}}"
+          ]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, 'ui-period', 'ui-cat-a', ?, 10, '', ?, datetime('now'), 'everyone')",
+          "params": [
+            "ui-award-a",
+            "{{owner}}",
+            "{{owner}}"
+          ]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, 'ui-period', 'ui-cat-b', ?, 25, '', ?, datetime('now'), 'everyone')",
+          "params": [
+            "ui-award-b",
+            "{{other}}",
+            "{{owner}}"
+          ]
+        },
+        {
+          "action": "open",
+          "as": "owner"
+        },
+        {
+          "action": "waitFor",
+          "as": "owner",
+          "selector": "[data-testid=\"lb-row\"]"
+        },
+        {
+          "action": "expectCount",
+          "as": "owner",
+          "selector": "[data-testid=\"lb-row\"]",
+          "count": 2
+        },
+        {
+          "action": "select",
+          "as": "owner",
+          "selector": "[data-testid=\"category-select\"]",
+          "value": "ui-cat-a"
+        },
+        {
+          "action": "expectCount",
+          "as": "owner",
+          "selector": "[data-testid=\"lb-row\"]",
+          "count": 1
+        },
+        {
+          "action": "expectText",
+          "as": "owner",
+          "text": "10",
+          "selector": "[data-testid=\"leaderboard-list\"]"
+        },
+        {
+          "action": "select",
+          "as": "owner",
+          "selector": "[data-testid=\"category-select\"]",
+          "value": "ui-cat-b"
+        },
+        {
+          "action": "expectCount",
+          "as": "owner",
+          "selector": "[data-testid=\"lb-row\"]",
+          "count": 1
+        },
+        {
+          "action": "expectText",
+          "as": "owner",
+          "text": "25",
+          "selector": "[data-testid=\"leaderboard-list\"]"
+        },
+        {
+          "action": "select",
+          "as": "owner",
+          "selector": "[data-testid=\"category-select\"]",
+          "value": ""
+        },
+        {
+          "action": "expectCount",
+          "as": "owner",
+          "selector": "[data-testid=\"lb-row\"]",
+          "count": 2
+        }
+      ]
+    }
+  ]
+}
