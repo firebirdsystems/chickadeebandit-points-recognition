@@ -2,7 +2,7 @@
   "id": "points-recognition",
   "contexts": ["household", "shared_space"],
   "name": "Points & Recognition",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Award points to members for participation, attendance, and volunteering. Live leaderboard with per-period resets — a social currency system for org engagement.",
   "entrypoint": "index.html",
   "runtime": "static",
@@ -86,6 +86,28 @@
       "param_map": {
         "member_id": { "kind": "subject_id" },
         "points": { "kind": "scaled_field", "value": "count", "factor": 1 }
+      }
+    },
+    {
+      "title": "Award points for finishing a book",
+      "description": "Finishing a book in the reading log pays points into the open recognition period — five per book by default, adjust to taste. The event names no title, so neither does the award.",
+      "trigger_event": "reading.book_finished",
+      "target_app_id": "points-recognition",
+      "action_id": "award",
+      "param_map": {
+        "member_id": { "kind": "payload_field", "value": "member_id" },
+        "points": { "kind": "const", "value": 5 }
+      }
+    },
+    {
+      "title": "Award a point when a task is completed",
+      "description": "Every completed task pays one point to its assignee — a light nudge that makes finishing visible.",
+      "trigger_event": "task.completed",
+      "target_app_id": "points-recognition",
+      "action_id": "award",
+      "param_map": {
+        "member_id": { "kind": "payload_field", "value": "assignee_id" },
+        "points": { "kind": "const", "value": 1 }
       }
     }
   ],
