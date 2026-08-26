@@ -17,6 +17,12 @@
     "requires_approval": false
   },
   "storage": "db",
+  "preload": {
+    "pr_settings": {"sql": "SELECT value FROM app_points_recognition__pr_settings WHERE key = 'officers_group_id'"},
+    "pr_periods": {"sql": "SELECT * FROM app_points_recognition__pr_periods ORDER BY created_at DESC"},
+    "pr_categories": {"sql": "SELECT * FROM app_points_recognition__pr_categories ORDER BY created_at ASC"},
+    "pr_awards": {"sql": "SELECT * FROM app_points_recognition__pr_awards ORDER BY awarded_at DESC LIMIT 2000"}
+  },
   "db_plaintext_columns": ["is_active"],
   "automation_actions": {
     "award": {
