@@ -20,6 +20,8 @@ CREATE INDEX IF NOT EXISTS idx_pr_awards_source_event_id
 -- Written as plaintext deliberately. Migrations run outside the app-db codec,
 -- and reads decrypt only values that carry the ciphertext marker — a plaintext
 -- name is returned as-is, so this row renders like any other category.
+-- cb:plaintext-literal name — one fixed seed row the award action names as a literal; category names written by an officer stay encrypted
+-- cb:plaintext-literal description — the seeded automation category below; officer-written descriptions stay encrypted
 INSERT OR IGNORE INTO app_points_recognition__pr_categories
   (id, name, icon, description, created_at, created_by, visibility)
 VALUES (
