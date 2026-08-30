@@ -1034,7 +1034,11 @@ window.submitAward = async function() {
       `${pointsVal} pts awarded to ${member?.name ?? "a member"}`,
       `${cat?.icon ?? "⭐"} ${cat?.name ?? "Points"}: ${note || "No note"}`
     ).catch(() => {});
-    logActivity(id, memberId, pointsVal, cat?.name ?? "").catch(() => {});
+    // No activity-feed write. /api/activity accepts only the hub's own closed
+    // ActivityType union (CALLER_ALLOWED_ACTIVITY_TYPES); "points_awarded" is
+    // not in it, so the entry this used to POST was refused 403 on every award
+    // and no household ever saw it — a fetch does not reject on 4xx, so the
+    // .catch() hid it. The event below is the sink that works.
     await publishEvent("recognition.award_given", id, {
       member_id: memberId,
       points: pointsVal,
@@ -1055,21 +1059,6 @@ async function notify(title, body) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ title, body, url: `/run/${APP_ID}` }),
-  }).catch(() => {});
-}
-
-async function logActivity(awardId, memberId, points, categoryName) {
-  const member = members.find(m => m.id === memberId);
-  await fetch(window.__ACTIVITY_URL ?? "/api/activity", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      type: "points_awarded",
-      description: `${ME?.name ?? "Leadership"} awarded ${points} pts to ${member?.name ?? "a member"} for ${categoryName}`,
-      metadata: {
-        deepLink: { appId: APP_ID, params: {} },
-      },
-    }),
   }).catch(() => {});
 }
 
