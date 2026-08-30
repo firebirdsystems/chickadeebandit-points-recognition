@@ -59,7 +59,7 @@
         {
           "action": "waitFor",
           "as": "owner",
-          "selector": "[data-testid=\"lb-row\"]"
+          "selector": "[data-testid=\"lb-row\"]:nth-child(1)"
         },
         {
           "action": "expectCount",
@@ -114,6 +114,102 @@
           "as": "owner",
           "selector": "[data-testid=\"lb-row\"]",
           "count": 2
+        }
+      ]
+    },
+    {
+      "name": "a private award is counted for the officer who gave it and absent from another member's leaderboard total",
+      "members": {
+        "owner": "adult",
+        "other": "adult"
+      },
+      "steps": [
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_points_recognition__pr_periods (id, name, started_at, is_active, created_at, created_by, visibility) VALUES (?, ?, datetime('now'), 1, datetime('now'), ?, 'everyone')",
+          "params": [
+            "ui-period",
+            "Spring Term",
+            "{{owner}}"
+          ]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_points_recognition__pr_categories (id, name, icon, description, created_at, created_by, visibility) VALUES (?, ?, '\u2b50', '', datetime('now'), ?, 'everyone')",
+          "params": [
+            "ui-cat-a",
+            "Kindness",
+            "{{owner}}"
+          ]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, 'ui-period', 'ui-cat-a', ?, ?, '', ?, datetime('now'), ?)",
+          "params": [
+            "ui-award-public",
+            "{{other}}",
+            10,
+            "{{owner}}",
+            "everyone"
+          ]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, 'ui-period', 'ui-cat-a', ?, ?, '', ?, datetime('now'), ?)",
+          "params": [
+            "ui-award-private",
+            "{{other}}",
+            50,
+            "{{owner}}",
+            "private"
+          ]
+        },
+        {
+          "action": "open",
+          "as": "owner"
+        },
+        {
+          "action": "waitFor",
+          "as": "owner",
+          "selector": "[data-testid=\"lb-row\"]:nth-child(1)"
+        },
+        {
+          "action": "expectCount",
+          "as": "owner",
+          "selector": "[data-testid=\"lb-row\"]",
+          "count": 1
+        },
+        {
+          "action": "expectText",
+          "as": "owner",
+          "text": "60",
+          "selector": "[data-testid=\"lb-points\"]"
+        },
+        {
+          "action": "open",
+          "as": "other"
+        },
+        {
+          "action": "waitFor",
+          "as": "other",
+          "selector": "[data-testid=\"lb-row\"]:nth-child(1)"
+        },
+        {
+          "action": "expectCount",
+          "as": "other",
+          "selector": "[data-testid=\"lb-row\"]",
+          "count": 1
+        },
+        {
+          "action": "expectText",
+          "as": "other",
+          "text": "10",
+          "selector": "[data-testid=\"lb-points\"]"
+        },
+        {
+          "action": "expectNoText",
+          "as": "other",
+          "text": "60"
         }
       ]
     }
