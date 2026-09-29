@@ -18,7 +18,7 @@
         },
         {
           "action": "seedRaw",
-          "sql": "INSERT INTO app_points_recognition__pr_categories (id, name, icon, description, created_at, created_by, visibility) VALUES (?, ?, '\u2b50', '', datetime('now'), ?, 'everyone')",
+          "sql": "INSERT INTO app_points_recognition__pr_categories (id, name, icon, description, created_at, created_by, visibility) VALUES (?, ?, '⭐', '', datetime('now'), ?, 'everyone')",
           "params": [
             "ui-cat-a",
             "Kindness",
@@ -27,7 +27,7 @@
         },
         {
           "action": "seedRaw",
-          "sql": "INSERT INTO app_points_recognition__pr_categories (id, name, icon, description, created_at, created_by, visibility) VALUES (?, ?, '\ud83d\udcda', '', datetime('now'), ?, 'everyone')",
+          "sql": "INSERT INTO app_points_recognition__pr_categories (id, name, icon, description, created_at, created_by, visibility) VALUES (?, ?, '📚', '', datetime('now'), ?, 'everyone')",
           "params": [
             "ui-cat-b",
             "Scholarship",
@@ -135,7 +135,7 @@
         },
         {
           "action": "seedRaw",
-          "sql": "INSERT INTO app_points_recognition__pr_categories (id, name, icon, description, created_at, created_by, visibility) VALUES (?, ?, '\u2b50', '', datetime('now'), ?, 'everyone')",
+          "sql": "INSERT INTO app_points_recognition__pr_categories (id, name, icon, description, created_at, created_by, visibility) VALUES (?, ?, '⭐', '', datetime('now'), ?, 'everyone')",
           "params": [
             "ui-cat-a",
             "Kindness",
@@ -210,6 +210,57 @@
           "action": "expectNoText",
           "as": "other",
           "text": "60"
+        }
+      ]
+    },
+    {
+      "name": "an award written by an automation (category 'automation', source_event_id set) counts on the rendered leaderboard",
+      "members": {
+        "owner": "adult",
+        "kid": "child"
+      },
+      "steps": [
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_points_recognition__pr_periods (id, name, started_at, is_active, created_at, created_by, visibility) VALUES (?, ?, datetime('now'), 1, datetime('now'), ?, 'everyone')",
+          "params": [
+            "ui-period-auto",
+            "Spring Term",
+            "{{owner}}"
+          ]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility, source_event_id) VALUES (?, 'ui-period-auto', 'automation', ?, 15, 'Awarded by an automation', 'automation', datetime('now'), 'everyone', ?)",
+          "params": [
+            "ui-award-auto-1",
+            "{{kid}}",
+            "evt-chore-completed-1"
+          ]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility, source_event_id) VALUES (?, 'ui-period-auto', 'automation', ?, 10, 'Awarded by an automation', 'automation', datetime('now'), 'everyone', ?)",
+          "params": [
+            "ui-award-auto-2",
+            "{{kid}}",
+            "evt-streak-milestone-1"
+          ]
+        },
+        {
+          "action": "open",
+          "as": "kid"
+        },
+        {
+          "action": "waitFor",
+          "as": "kid",
+          "selector": "[data-testid=\"lb-row\"]:nth-child(1)"
+        },
+        {
+          "action": "expectText",
+          "as": "kid",
+          "selector": "[data-testid=\"lb-row\"]:nth-child(1) [data-testid=\"lb-points\"]",
+          "text": "25"
         }
       ]
     }
