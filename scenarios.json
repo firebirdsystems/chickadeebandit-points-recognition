@@ -23,6 +23,136 @@
           "expect": { "status": 403 }
         }
       ]
+    },
+    {
+      "name": "a child can see awards but cannot award themselves points, inflate an award, or create categories and periods",
+      "members": { "kid": "child", "parent": "adult" },
+      "steps": [
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_points_recognition__pr_periods (id, name, started_at, created_at, created_by, visibility) VALUES ('p-1', 'Spring', '2099-01-01T00:00:00Z', '2099-01-01T00:00:00Z', ?, 'everyone')",
+          "params": ["{{parent}}"]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES ('aw-1', 'p-1', 'automation', ?, 5, 'helped out', ?, '2099-01-02T00:00:00Z', 'everyone')",
+          "params": ["{{kid}}", "{{parent}}"]
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "SELECT id, points FROM app_points_recognition__pr_awards",
+          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "id": "aw-1", "points": 5 }] }
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at) VALUES ('aw-self', 'p-1', 'automation', ?, 100, 'me', ?, '2099-01-03T00:00:00Z')",
+          "params": ["{{kid}}", "{{kid}}"],
+          "expect": { "status": 403 }
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "UPDATE app_points_recognition__pr_awards SET points = 500 WHERE id = 'aw-1'",
+          "expect": { "status": 403 }
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "INSERT INTO app_points_recognition__pr_categories (id, name, created_at, created_by) VALUES ('cat-kid', 'Kid picks', '2099-01-03T00:00:00Z', ?)",
+          "params": ["{{kid}}"],
+          "expect": { "status": 403 }
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "INSERT INTO app_points_recognition__pr_periods (id, name, started_at, created_at, created_by) VALUES ('p-kid', 'Kid period', '2099-01-03T00:00:00Z', '2099-01-03T00:00:00Z', ?)",
+          "params": ["{{kid}}"],
+          "expect": { "status": 403 }
+        },
+        {
+          "action": "db",
+          "as": "parent",
+          "sql": "SELECT id, points FROM app_points_recognition__pr_awards",
+          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "id": "aw-1", "points": 5 }] }
+        }
+      ]
+    },
+    {
+      "name": "an officers-group member sets up a period and category and awards points; a plain adult outside the group cannot award, inflate or delete",
+      "members": { "officer": "adult", "member": "adult" },
+      "steps": [
+        { "action": "seedGroup", "group": "officers", "name": "Officers", "members": ["officer"] },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_points_recognition__pr_settings (key, value) VALUES ('officers_group_id', ?)",
+          "params": ["{{group:officers}}"]
+        },
+        {
+          "action": "db",
+          "as": "officer",
+          "sql": "INSERT INTO app_points_recognition__pr_periods (id, name, started_at, created_at, created_by, visibility) VALUES (?, ?, ?, ?, ?, 'everyone')",
+          "params": ["per-1", "Spring", "2099-01-01T00:00:00Z", "2099-01-01T00:00:00Z", "{{officer}}"],
+          "expect": { "status": 200 }
+        },
+        {
+          "action": "db",
+          "as": "officer",
+          "sql": "INSERT INTO app_points_recognition__pr_categories (id, name, created_at, created_by, visibility) VALUES (?, ?, ?, ?, 'everyone')",
+          "params": ["cat-1", "Service", "2099-01-01T00:00:00Z", "{{officer}}"],
+          "expect": { "status": 200 }
+        },
+        {
+          "action": "db",
+          "as": "officer",
+          "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, 'everyone')",
+          "params": ["aw-1", "per-1", "cat-1", "{{member}}", 10, "{{officer}}", "2099-01-02T00:00:00Z"],
+          "expect": { "status": 200 }
+        },
+        {
+          "action": "db",
+          "as": "officer",
+          "sql": "UPDATE app_points_recognition__pr_awards SET points = 15 WHERE id = 'aw-1'",
+          "expect": { "status": 200 }
+        },
+        {
+          "action": "db",
+          "as": "member",
+          "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, 'everyone')",
+          "params": ["aw-2", "per-1", "cat-1", "{{member}}", 500, "{{member}}", "2099-01-02T00:00:00Z"],
+          "expect": { "status": 403 }
+        },
+        {
+          "action": "db",
+          "as": "member",
+          "sql": "UPDATE app_points_recognition__pr_awards SET points = 999 WHERE id = 'aw-1'",
+          "expect": { "status": 403 }
+        },
+        {
+          "action": "db",
+          "as": "member",
+          "sql": "DELETE FROM app_points_recognition__pr_awards WHERE id = 'aw-1'",
+          "expect": { "status": 403 }
+        },
+        {
+          "action": "db",
+          "as": "member",
+          "sql": "INSERT INTO app_points_recognition__pr_categories (id, name, created_at, created_by, visibility) VALUES (?, ?, ?, ?, 'everyone')",
+          "params": ["cat-2", "Self-promotion", "2099-01-01T00:00:00Z", "{{member}}"],
+          "expect": { "status": 403 }
+        },
+        {
+          "action": "db",
+          "as": "member",
+          "sql": "SELECT id, member_id, points, awarded_by FROM app_points_recognition__pr_awards",
+          "expect": {
+            "status": 200,
+            "rowCount": 1,
+            "rowsContain": [{ "id": "aw-1", "member_id": "scn-member", "points": 15, "awarded_by": "scn-officer" }]
+          }
+        }
+      ]
     }
   ]
 }
