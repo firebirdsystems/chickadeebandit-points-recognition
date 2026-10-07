@@ -115,6 +115,24 @@
         "member_id": { "kind": "payload_field", "value": "assignee_id" },
         "points": { "kind": "const", "value": 1 }
       }
+    },
+    {
+      "title": "Award points for a week of practice",
+      "description": "Meeting a weekly practice goal in Practice Log pays points into the open recognition period. Five per goal by default; adjust to taste. The event names no activity, so neither does the award.",
+      "trigger_event": "practice-log.weekly_goal_met",
+      "trigger_app_id": "practice-log",
+      "target_app_id": "points-recognition",
+      "action_id": "award",
+      "param_map": {
+        "member_id": {
+          "kind": "payload_field",
+          "value": "member_id"
+        },
+        "points": {
+          "kind": "const",
+          "value": 5
+        }
+      }
     }
   ],
   "glance": {
