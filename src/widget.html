@@ -68,13 +68,16 @@
 <body>
 
 <div class="widget-header">
-  <span class="widget-title">⭐ Top Members</span>
+  <span class="widget-title"><span id="title-glyph"></span> Top Members</span>
   <span class="period-name" id="period-label"></span>
 </div>
 <div id="list"></div>
 
 <script type="module">
-import { esc, memberColor, initial } from "/hub-sdk.js";
+import { esc, memberColor, initial, glyph } from "/hub-sdk.js";
+
+// The title is static markup; its mark comes from the SDK.
+document.getElementById("title-glyph").innerHTML = glyph("star");
 
 const CONTEXT = window.__CONTEXT_URL ?? "";
 const DB      = window.__DB_URL      ?? "";

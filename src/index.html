@@ -313,7 +313,7 @@
       padding: 32px 20px;
       color: var(--hub-text-muted, #6b7280);
     }
-    .empty-state .empty-icon { font-size: 2.2rem; margin-bottom: 8px; }
+    .empty-state .empty-icon { margin-bottom: 12px; }
     .empty-state p { font-size: 0.9rem; }
 
     /* Toast */
@@ -347,7 +347,7 @@
 <body>
 
 <div class="app-header">
-  <h1 class="app-title">⭐ Points &amp; Recognition</h1>
+  <h1 class="app-title"><span id="page-glyph"></span> Points &amp; Recognition</h1>
 </div>
 
 <nav class="tab-nav">
@@ -367,7 +367,7 @@
   </div>
   <div class="card" id="leaderboard-card">
     <div id="leaderboard-list" data-testid="leaderboard-list">
-      <div class="empty-state"><div class="empty-icon">⭐</div><p>Loading…</p></div>
+      <div class="empty-state"><div class="empty-icon" id="loading-bird"></div><p>Loading…</p></div>
     </div>
   </div>
 </div>
@@ -411,7 +411,11 @@
 <div class="toast" id="toast"></div>
 
 <script type="module">
-import { esc, memberColor, initial, isAdult, hubConfirm, formatRelativeDate, searchMatch } from "/hub-sdk.js";
+import { esc, memberColor, initial, isAdult, hubConfirm, formatRelativeDate, searchMatch, glyph, chickadee } from "/hub-sdk.js";
+
+// The page heading is static markup; its mark comes from the SDK.
+document.getElementById("page-glyph").innerHTML = glyph("star");
+document.getElementById("loading-bird").innerHTML = chickadee("perched", { size: 72 });
 import { buildLeaderboard, memberTotal, rankLabel, canAwardPoints as _canAwardPoints, searchableFields } from "./logic.js";
 
 const CONTEXT = window.__CONTEXT_URL ?? "";
@@ -695,14 +699,14 @@ function renderLeaderboard() {
   const list = document.getElementById("leaderboard-list");
 
   if (!selectedPeriodId) {
-    list.innerHTML = `<div class="empty-state"><div class="empty-icon">⭐</div><p>No period selected. Leadership can create a period in the Admin tab.</p></div>`;
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">${chickadee("nest")}</div><p>No period selected. Leadership can create a period in the Admin tab.</p></div>`;
     return;
   }
 
   const ranked = buildLeaderboard(awards, members, categoryId);
 
   if (!ranked.length) {
-    list.innerHTML = `<div class="empty-state"><div class="empty-icon">⭐</div><p>No points awarded yet${categoryId ? " in this category" : ""}.</p></div>`;
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">${chickadee("nest")}</div><p>No points awarded yet${categoryId ? " in this category" : ""}.</p></div>`;
     return;
   }
 
@@ -733,12 +737,12 @@ document.addEventListener("input", (e) => {
 function renderMyPoints() {
   const el = document.getElementById("mypoints-content");
   if (!ME) {
-    el.innerHTML = `<div class="card"><div class="empty-state"><div class="empty-icon">👤</div><p>Sign in to see your points.</p></div></div>`;
+    el.innerHTML = `<div class="card"><div class="empty-state"><div class="empty-icon">${chickadee("perched")}</div><p>Sign in to see your points.</p></div></div>`;
     return;
   }
 
   if (!selectedPeriodId && !periods.length) {
-    el.innerHTML = `<div class="card"><div class="empty-state"><div class="empty-icon">⭐</div><p>No active period yet. Check back after leadership sets one up.</p></div></div>`;
+    el.innerHTML = `<div class="card"><div class="empty-state"><div class="empty-icon">${chickadee("waiting")}</div><p>No active period yet. Check back after leadership sets one up.</p></div></div>`;
     return;
   }
 
@@ -779,8 +783,8 @@ function renderMyPoints() {
       ${allMyHistory.length ? `<div class="search-row"><input id="search" class="search-input" type="search" placeholder="Search your awards…" aria-label="Search your awards" value="${esc(searchQ)}" /></div>` : ""}
       ${myHistory.length === 0
         ? (searchQ
-          ? `<div class="empty-state"><div class="empty-icon">🔍</div><p>No awards match "${esc(searchQ)}".</p></div>`
-          : `<div class="empty-state"><div class="empty-icon">⭐</div><p>No awards yet.</p></div>`)
+          ? `<div class="empty-state"><div class="empty-icon">${chickadee("searching")}</div><p>No awards match "${esc(searchQ)}".</p></div>`
+          : `<div class="empty-state"><div class="empty-icon">${chickadee("nest")}</div><p>No awards yet.</p></div>`)
         : myHistory.map(a => {
             const awarder = members.find(m => m.id === a.awarded_by);
             const date = formatRelativeDate ? formatRelativeDate(a.awarded_at) : new Date(a.awarded_at).toLocaleDateString();
@@ -911,7 +915,7 @@ function renderAdminPeriods() {
     const startDate = new Date(active.started_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
     return `
       <div class="period-card-active">
-        <div class="period-name">🟢 ${esc(active.name)}</div>
+        <div class="period-name">${glyph("dot")} ${esc(active.name)}</div>
         <div class="period-meta">Started ${startDate} · ${awardCount} award${awardCount === 1 ? "" : "s"}</div>
         <div class="period-actions">
           <button class="btn-small" data-period-id="${esc(active.id)}" onclick="openRenamePeriodModal(this.dataset.periodId)">Rename</button>
