@@ -1,0 +1,1727 @@
+{
+ "groups": [
+  {
+   "key": "officers",
+   "name": "Officers",
+   "members": [
+    "{{me}}",
+    "{{partner}}"
+   ]
+  }
+ ],
+ "seed": [
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_settings (key, value) VALUES (?, ?)",
+   "params": [
+    "officers_group_id",
+    "{{group:officers}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_periods (id, name, started_at, closed_at, is_active, created_at, created_by, visibility) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-250 days','+0 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-160 days','+0 minutes'), ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-250 days','+0 minutes'), ?, ?)",
+   "params": [
+    "perf-period-spring",
+    "Spring Term",
+    0,
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_periods (id, name, started_at, closed_at, is_active, created_at, created_by, visibility) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-160 days','+0 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-70 days','+0 minutes'), ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-160 days','+0 minutes'), ?, ?)",
+   "params": [
+    "perf-period-summer",
+    "Summer",
+    0,
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_periods (id, name, started_at, is_active, created_at, created_by, visibility) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-70 days','+0 minutes'), ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-70 days','+0 minutes'), ?, ?)",
+   "params": [
+    "perf-period-fall",
+    "Fall Term",
+    1,
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_categories (id, name, icon, description, created_at, created_by, visibility) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-250 days','+0 minutes'), ?, ?)",
+   "params": [
+    "seed-attendance",
+    "Attendance",
+    "📋",
+    "Showed up, on time",
+    "system",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_categories (id, name, icon, description, created_at, created_by, visibility) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-250 days','+1 minutes'), ?, ?)",
+   "params": [
+    "seed-service",
+    "Service",
+    "🤝",
+    "Helping someone out without being asked",
+    "system",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_categories (id, name, icon, description, created_at, created_by, visibility) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-250 days','+2 minutes'), ?, ?)",
+   "params": [
+    "seed-volunteering",
+    "Volunteering",
+    "💪",
+    "Signed up and followed through",
+    "system",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_categories (id, name, icon, description, created_at, created_by, visibility) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-250 days','+3 minutes'), ?, ?)",
+   "params": [
+    "seed-leadership",
+    "Leadership",
+    "⭐",
+    "Took charge of something",
+    "system",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_categories (id, name, icon, description, created_at, created_by, visibility) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-250 days','+4 minutes'), ?, ?)",
+   "params": [
+    "perf-cat-kindness",
+    "Kindness",
+    "💛",
+    "A kind word or deed",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_categories (id, name, icon, description, created_at, created_by, visibility) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-250 days','+5 minutes'), ?, ?)",
+   "params": [
+    "perf-cat-scholarship",
+    "Scholarship",
+    "📚",
+    "Homework, reading and grades",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-0.5 days','+0 minutes'), ?)",
+   "params": [
+    "perf-award-001",
+    "perf-period-fall",
+    "seed-service",
+    "{{me}}",
+    5,
+    "Set the table every night this week",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-1.65 days','-37 minutes'), ?)",
+   "params": [
+    "perf-award-002",
+    "perf-period-fall",
+    "seed-attendance",
+    "{{child}}",
+    10,
+    "Walked the dog in the rain",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-2.8 days','-74 minutes'), ?)",
+   "params": [
+    "perf-award-003",
+    "perf-period-fall",
+    "perf-cat-scholarship",
+    "{{partner}}",
+    3,
+    "Helped with the science fair board",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-3.9499999999999997 days','-111 minutes'), ?)",
+   "params": [
+    "perf-award-004",
+    "perf-period-fall",
+    "perf-cat-kindness",
+    "{{child2}}",
+    15,
+    "Ran the bake sale table",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-5.1 days','-148 minutes'), ?)",
+   "params": [
+    "perf-award-005",
+    "perf-period-fall",
+    "seed-leadership",
+    "{{child}}",
+    5,
+    "Read to little sister before bed",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-6.25 days','-185 minutes'), ?)",
+   "params": [
+    "perf-award-006",
+    "perf-period-fall",
+    "seed-volunteering",
+    "{{partner}}",
+    8,
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-7.3999999999999995 days','-222 minutes'), ?)",
+   "params": [
+    "perf-award-007",
+    "perf-period-fall",
+    "seed-service",
+    "{{child2}}",
+    20,
+    "Cleared the gutters with grandpa",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-8.549999999999999 days','-259 minutes'), ?)",
+   "params": [
+    "perf-award-008",
+    "perf-period-fall",
+    "seed-attendance",
+    "{{adult2}}",
+    10,
+    "Organised the carpool",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-9.7 days','-296 minutes'), ?)",
+   "params": [
+    "perf-award-009",
+    "perf-period-fall",
+    "perf-cat-scholarship",
+    "{{partner}}",
+    5,
+    "Perfect attendance at practice",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-10.85 days','-333 minutes'), ?)",
+   "params": [
+    "perf-award-010",
+    "perf-period-fall",
+    "perf-cat-kindness",
+    "{{child2}}",
+    12,
+    "Tutored a classmate in maths",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-12 days','-370 minutes'), ?)",
+   "params": [
+    "perf-award-011",
+    "perf-period-fall",
+    "seed-leadership",
+    "{{adult2}}",
+    2,
+    "Cooked dinner for everyone",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-13.149999999999999 days','-407 minutes'), ?)",
+   "params": [
+    "perf-award-012",
+    "perf-period-fall",
+    "seed-volunteering",
+    "{{me}}",
+    25,
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-14.299999999999999 days','-444 minutes'), ?)",
+   "params": [
+    "perf-award-013",
+    "perf-period-fall",
+    "seed-service",
+    "{{child2}}",
+    5,
+    "Led the family meeting",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-15.45 days','-481 minutes'), ?)",
+   "params": [
+    "perf-award-014",
+    "perf-period-fall",
+    "seed-attendance",
+    "{{adult2}}",
+    10,
+    "Packed lunches all week",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-16.599999999999998 days','-518 minutes'), ?)",
+   "params": [
+    "perf-award-015",
+    "perf-period-fall",
+    "perf-cat-scholarship",
+    "{{me}}",
+    3,
+    "Stayed late to stack chairs",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-17.75 days','-555 minutes'), ?)",
+   "params": [
+    "perf-award-016",
+    "perf-period-fall",
+    "perf-cat-kindness",
+    "{{child}}",
+    15,
+    "Wrote thank-you cards",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-18.9 days','-592 minutes'), ?)",
+   "params": [
+    "perf-award-017",
+    "perf-period-fall",
+    "seed-leadership",
+    "{{adult2}}",
+    5,
+    "Fixed the squeaky gate",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20.049999999999997 days','-29 minutes'), ?)",
+   "params": [
+    "perf-award-018",
+    "perf-period-fall",
+    "seed-volunteering",
+    "{{me}}",
+    8,
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-21.2 days','-66 minutes'), ?)",
+   "params": [
+    "perf-award-019",
+    "perf-period-fall",
+    "seed-service",
+    "{{child}}",
+    20,
+    "Helped a friend move",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-22.349999999999998 days','-103 minutes'), ?)",
+   "params": [
+    "perf-award-020",
+    "perf-period-fall",
+    "seed-attendance",
+    "{{partner}}",
+    10,
+    "Top marks on the spelling test",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-23.5 days','-140 minutes'), ?)",
+   "params": [
+    "perf-award-021",
+    "perf-period-fall",
+    "perf-cat-scholarship",
+    "{{me}}",
+    5,
+    "Set the table every night this week",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-24.65 days','-177 minutes'), ?)",
+   "params": [
+    "perf-award-022",
+    "perf-period-fall",
+    "perf-cat-kindness",
+    "{{child}}",
+    12,
+    "Walked the dog in the rain",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-25.799999999999997 days','-214 minutes'), ?)",
+   "params": [
+    "perf-award-023",
+    "perf-period-fall",
+    "seed-leadership",
+    "{{partner}}",
+    2,
+    "Helped with the science fair board",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-26.95 days','-251 minutes'), ?)",
+   "params": [
+    "perf-award-024",
+    "perf-period-fall",
+    "seed-volunteering",
+    "{{child2}}",
+    25,
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-28.099999999999998 days','-288 minutes'), ?)",
+   "params": [
+    "perf-award-025",
+    "perf-period-fall",
+    "seed-service",
+    "{{child}}",
+    5,
+    "Read to little sister before bed",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-29.249999999999996 days','-325 minutes'), ?)",
+   "params": [
+    "perf-award-026",
+    "perf-period-fall",
+    "seed-attendance",
+    "{{partner}}",
+    10,
+    "Finished the book report early",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-30.4 days','-362 minutes'), ?)",
+   "params": [
+    "perf-award-027",
+    "perf-period-fall",
+    "perf-cat-scholarship",
+    "{{child2}}",
+    3,
+    "Cleared the gutters with grandpa",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-31.549999999999997 days','-399 minutes'), ?)",
+   "params": [
+    "perf-award-028",
+    "perf-period-fall",
+    "perf-cat-kindness",
+    "{{adult2}}",
+    15,
+    "Organised the carpool",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-32.699999999999996 days','-436 minutes'), ?)",
+   "params": [
+    "perf-award-029",
+    "perf-period-fall",
+    "seed-leadership",
+    "{{partner}}",
+    5,
+    "Perfect attendance at practice",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-33.849999999999994 days','-473 minutes'), ?)",
+   "params": [
+    "perf-award-030",
+    "perf-period-fall",
+    "seed-volunteering",
+    "{{child2}}",
+    8,
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-35 days','-510 minutes'), ?)",
+   "params": [
+    "perf-award-031",
+    "perf-period-fall",
+    "seed-service",
+    "{{adult2}}",
+    20,
+    "Cooked dinner for everyone",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-36.15 days','-547 minutes'), ?)",
+   "params": [
+    "perf-award-032",
+    "perf-period-fall",
+    "seed-attendance",
+    "{{me}}",
+    10,
+    "Shovelled the neighbour's driveway",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-37.3 days','-584 minutes'), ?)",
+   "params": [
+    "perf-award-033",
+    "perf-period-fall",
+    "perf-cat-scholarship",
+    "{{child2}}",
+    5,
+    "Led the family meeting",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-38.449999999999996 days','-21 minutes'), ?)",
+   "params": [
+    "perf-award-034",
+    "perf-period-fall",
+    "perf-cat-kindness",
+    "{{adult2}}",
+    12,
+    "Packed lunches all week",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-39.599999999999994 days','-58 minutes'), ?)",
+   "params": [
+    "perf-award-035",
+    "perf-period-fall",
+    "seed-leadership",
+    "{{me}}",
+    2,
+    "Stayed late to stack chairs",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-40.75 days','-95 minutes'), ?)",
+   "params": [
+    "perf-award-036",
+    "perf-period-fall",
+    "seed-volunteering",
+    "{{child}}",
+    25,
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-41.9 days','-132 minutes'), ?)",
+   "params": [
+    "perf-award-037",
+    "perf-period-fall",
+    "seed-service",
+    "{{adult2}}",
+    5,
+    "Fixed the squeaky gate",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-43.05 days','-169 minutes'), ?)",
+   "params": [
+    "perf-award-038",
+    "perf-period-fall",
+    "seed-attendance",
+    "{{me}}",
+    10,
+    "Planned the weekend hike",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-44.199999999999996 days','-206 minutes'), ?)",
+   "params": [
+    "perf-award-039",
+    "perf-period-fall",
+    "perf-cat-scholarship",
+    "{{child}}",
+    3,
+    "Helped a friend move",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-45.349999999999994 days','-243 minutes'), ?)",
+   "params": [
+    "perf-award-040",
+    "perf-period-fall",
+    "perf-cat-kindness",
+    "{{partner}}",
+    15,
+    "Top marks on the spelling test",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-46.5 days','-280 minutes'), ?)",
+   "params": [
+    "perf-award-041",
+    "perf-period-fall",
+    "seed-leadership",
+    "{{me}}",
+    5,
+    "Set the table every night this week",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-47.65 days','-317 minutes'), ?)",
+   "params": [
+    "perf-award-042",
+    "perf-period-fall",
+    "seed-volunteering",
+    "{{child}}",
+    8,
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-48.8 days','-354 minutes'), ?)",
+   "params": [
+    "perf-award-043",
+    "perf-period-fall",
+    "seed-service",
+    "{{partner}}",
+    20,
+    "Helped with the science fair board",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-49.949999999999996 days','-391 minutes'), ?)",
+   "params": [
+    "perf-award-044",
+    "perf-period-fall",
+    "seed-attendance",
+    "{{child2}}",
+    10,
+    "Ran the bake sale table",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-51.099999999999994 days','-428 minutes'), ?)",
+   "params": [
+    "perf-award-045",
+    "perf-period-fall",
+    "perf-cat-scholarship",
+    "{{child}}",
+    5,
+    "Read to little sister before bed",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-52.24999999999999 days','-465 minutes'), ?)",
+   "params": [
+    "perf-award-046",
+    "perf-period-fall",
+    "perf-cat-kindness",
+    "{{partner}}",
+    12,
+    "Finished the book report early",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-53.4 days','-502 minutes'), ?)",
+   "params": [
+    "perf-award-047",
+    "perf-period-fall",
+    "seed-leadership",
+    "{{child2}}",
+    2,
+    "Cleared the gutters with grandpa",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-54.55 days','-539 minutes'), ?)",
+   "params": [
+    "perf-award-048",
+    "perf-period-fall",
+    "seed-volunteering",
+    "{{adult2}}",
+    25,
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-55.699999999999996 days','-576 minutes'), ?)",
+   "params": [
+    "perf-award-049",
+    "perf-period-fall",
+    "seed-service",
+    "{{partner}}",
+    5,
+    "Perfect attendance at practice",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-56.849999999999994 days','-13 minutes'), ?)",
+   "params": [
+    "perf-award-050",
+    "perf-period-fall",
+    "seed-attendance",
+    "{{child2}}",
+    10,
+    "Tutored a classmate in maths",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-57.99999999999999 days','-50 minutes'), ?)",
+   "params": [
+    "perf-award-051",
+    "perf-period-fall",
+    "perf-cat-scholarship",
+    "{{adult2}}",
+    3,
+    "Cooked dinner for everyone",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-59.15 days','-87 minutes'), ?)",
+   "params": [
+    "perf-award-052",
+    "perf-period-fall",
+    "perf-cat-kindness",
+    "{{me}}",
+    15,
+    "Shovelled the neighbour's driveway",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-60.3 days','-124 minutes'), ?)",
+   "params": [
+    "perf-award-053",
+    "perf-period-fall",
+    "seed-leadership",
+    "{{child2}}",
+    5,
+    "Led the family meeting",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-61.449999999999996 days','-161 minutes'), ?)",
+   "params": [
+    "perf-award-054",
+    "perf-period-fall",
+    "seed-volunteering",
+    "{{adult2}}",
+    8,
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-62.599999999999994 days','-198 minutes'), ?)",
+   "params": [
+    "perf-award-055",
+    "perf-period-fall",
+    "seed-service",
+    "{{me}}",
+    20,
+    "Stayed late to stack chairs",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-63.74999999999999 days','-235 minutes'), ?)",
+   "params": [
+    "perf-award-056",
+    "perf-period-fall",
+    "seed-attendance",
+    "{{child}}",
+    10,
+    "Wrote thank-you cards",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-64.89999999999999 days','-272 minutes'), ?)",
+   "params": [
+    "perf-award-057",
+    "perf-period-fall",
+    "perf-cat-scholarship",
+    "{{adult2}}",
+    5,
+    "Fixed the squeaky gate",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-66.05 days','-309 minutes'), ?)",
+   "params": [
+    "perf-award-058",
+    "perf-period-fall",
+    "perf-cat-kindness",
+    "{{me}}",
+    12,
+    "Planned the weekend hike",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-67.19999999999999 days','-346 minutes'), ?)",
+   "params": [
+    "perf-award-059",
+    "perf-period-fall",
+    "seed-leadership",
+    "{{child}}",
+    2,
+    "Helped a friend move",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-68.35 days','-383 minutes'), ?)",
+   "params": [
+    "perf-award-060",
+    "perf-period-fall",
+    "seed-volunteering",
+    "{{partner}}",
+    25,
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-72 days','-420 minutes'), ?)",
+   "params": [
+    "perf-award-061",
+    "perf-period-summer",
+    "seed-service",
+    "{{me}}",
+    5,
+    "Set the table every night this week",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-74.5 days','-457 minutes'), ?)",
+   "params": [
+    "perf-award-062",
+    "perf-period-summer",
+    "seed-attendance",
+    "{{child}}",
+    10,
+    "Walked the dog in the rain",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-77 days','-494 minutes'), ?)",
+   "params": [
+    "perf-award-063",
+    "perf-period-summer",
+    "perf-cat-scholarship",
+    "{{partner}}",
+    3,
+    "Helped with the science fair board",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-79.5 days','-531 minutes'), ?)",
+   "params": [
+    "perf-award-064",
+    "perf-period-summer",
+    "perf-cat-kindness",
+    "{{child2}}",
+    15,
+    "Ran the bake sale table",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-82 days','-568 minutes'), ?)",
+   "params": [
+    "perf-award-065",
+    "perf-period-summer",
+    "seed-leadership",
+    "{{child}}",
+    5,
+    "Read to little sister before bed",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-84.5 days','-5 minutes'), ?)",
+   "params": [
+    "perf-award-066",
+    "perf-period-summer",
+    "seed-volunteering",
+    "{{partner}}",
+    8,
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-87 days','-42 minutes'), ?)",
+   "params": [
+    "perf-award-067",
+    "perf-period-summer",
+    "seed-service",
+    "{{child2}}",
+    20,
+    "Cleared the gutters with grandpa",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-89.5 days','-79 minutes'), ?)",
+   "params": [
+    "perf-award-068",
+    "perf-period-summer",
+    "seed-attendance",
+    "{{adult2}}",
+    10,
+    "Organised the carpool",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-92 days','-116 minutes'), ?)",
+   "params": [
+    "perf-award-069",
+    "perf-period-summer",
+    "perf-cat-scholarship",
+    "{{partner}}",
+    5,
+    "Perfect attendance at practice",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-94.5 days','-153 minutes'), ?)",
+   "params": [
+    "perf-award-070",
+    "perf-period-summer",
+    "perf-cat-kindness",
+    "{{child2}}",
+    12,
+    "Tutored a classmate in maths",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-97 days','-190 minutes'), ?)",
+   "params": [
+    "perf-award-071",
+    "perf-period-summer",
+    "seed-leadership",
+    "{{adult2}}",
+    2,
+    "Cooked dinner for everyone",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-99.5 days','-227 minutes'), ?)",
+   "params": [
+    "perf-award-072",
+    "perf-period-summer",
+    "seed-volunteering",
+    "{{me}}",
+    25,
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-102 days','-264 minutes'), ?)",
+   "params": [
+    "perf-award-073",
+    "perf-period-summer",
+    "seed-service",
+    "{{child2}}",
+    5,
+    "Led the family meeting",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-104.5 days','-301 minutes'), ?)",
+   "params": [
+    "perf-award-074",
+    "perf-period-summer",
+    "seed-attendance",
+    "{{adult2}}",
+    10,
+    "Packed lunches all week",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-107 days','-338 minutes'), ?)",
+   "params": [
+    "perf-award-075",
+    "perf-period-summer",
+    "perf-cat-scholarship",
+    "{{me}}",
+    3,
+    "Stayed late to stack chairs",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-109.5 days','-375 minutes'), ?)",
+   "params": [
+    "perf-award-076",
+    "perf-period-summer",
+    "perf-cat-kindness",
+    "{{child}}",
+    15,
+    "Wrote thank-you cards",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-112 days','-412 minutes'), ?)",
+   "params": [
+    "perf-award-077",
+    "perf-period-summer",
+    "seed-leadership",
+    "{{adult2}}",
+    5,
+    "Fixed the squeaky gate",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-114.5 days','-449 minutes'), ?)",
+   "params": [
+    "perf-award-078",
+    "perf-period-summer",
+    "seed-volunteering",
+    "{{me}}",
+    8,
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-117 days','-486 minutes'), ?)",
+   "params": [
+    "perf-award-079",
+    "perf-period-summer",
+    "seed-service",
+    "{{child}}",
+    20,
+    "Helped a friend move",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-119.5 days','-523 minutes'), ?)",
+   "params": [
+    "perf-award-080",
+    "perf-period-summer",
+    "seed-attendance",
+    "{{partner}}",
+    10,
+    "Top marks on the spelling test",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-122 days','-560 minutes'), ?)",
+   "params": [
+    "perf-award-081",
+    "perf-period-summer",
+    "perf-cat-scholarship",
+    "{{me}}",
+    5,
+    "Set the table every night this week",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-124.5 days','-597 minutes'), ?)",
+   "params": [
+    "perf-award-082",
+    "perf-period-summer",
+    "perf-cat-kindness",
+    "{{child}}",
+    12,
+    "Walked the dog in the rain",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-127 days','-34 minutes'), ?)",
+   "params": [
+    "perf-award-083",
+    "perf-period-summer",
+    "seed-leadership",
+    "{{partner}}",
+    2,
+    "Helped with the science fair board",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-129.5 days','-71 minutes'), ?)",
+   "params": [
+    "perf-award-084",
+    "perf-period-summer",
+    "seed-volunteering",
+    "{{child2}}",
+    25,
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-132 days','-108 minutes'), ?)",
+   "params": [
+    "perf-award-085",
+    "perf-period-summer",
+    "seed-service",
+    "{{child}}",
+    5,
+    "Read to little sister before bed",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-134.5 days','-145 minutes'), ?)",
+   "params": [
+    "perf-award-086",
+    "perf-period-summer",
+    "seed-attendance",
+    "{{partner}}",
+    10,
+    "Finished the book report early",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-137 days','-182 minutes'), ?)",
+   "params": [
+    "perf-award-087",
+    "perf-period-summer",
+    "perf-cat-scholarship",
+    "{{child2}}",
+    3,
+    "Cleared the gutters with grandpa",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-139.5 days','-219 minutes'), ?)",
+   "params": [
+    "perf-award-088",
+    "perf-period-summer",
+    "perf-cat-kindness",
+    "{{adult2}}",
+    15,
+    "Organised the carpool",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-142 days','-256 minutes'), ?)",
+   "params": [
+    "perf-award-089",
+    "perf-period-summer",
+    "seed-leadership",
+    "{{partner}}",
+    5,
+    "Perfect attendance at practice",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-144.5 days','-293 minutes'), ?)",
+   "params": [
+    "perf-award-090",
+    "perf-period-summer",
+    "seed-volunteering",
+    "{{child2}}",
+    8,
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-147 days','-330 minutes'), ?)",
+   "params": [
+    "perf-award-091",
+    "perf-period-summer",
+    "seed-service",
+    "{{adult2}}",
+    20,
+    "Cooked dinner for everyone",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-149.5 days','-367 minutes'), ?)",
+   "params": [
+    "perf-award-092",
+    "perf-period-summer",
+    "seed-attendance",
+    "{{me}}",
+    10,
+    "Shovelled the neighbour's driveway",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-152 days','-404 minutes'), ?)",
+   "params": [
+    "perf-award-093",
+    "perf-period-summer",
+    "perf-cat-scholarship",
+    "{{child2}}",
+    5,
+    "Led the family meeting",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-154.5 days','-441 minutes'), ?)",
+   "params": [
+    "perf-award-094",
+    "perf-period-summer",
+    "perf-cat-kindness",
+    "{{adult2}}",
+    12,
+    "Packed lunches all week",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-157 days','-478 minutes'), ?)",
+   "params": [
+    "perf-award-095",
+    "perf-period-summer",
+    "seed-leadership",
+    "{{me}}",
+    2,
+    "Stayed late to stack chairs",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-162 days','-515 minutes'), ?)",
+   "params": [
+    "perf-award-096",
+    "perf-period-spring",
+    "seed-volunteering",
+    "{{child}}",
+    25,
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-165.5 days','-552 minutes'), ?)",
+   "params": [
+    "perf-award-097",
+    "perf-period-spring",
+    "seed-service",
+    "{{adult2}}",
+    5,
+    "Fixed the squeaky gate",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-169 days','-589 minutes'), ?)",
+   "params": [
+    "perf-award-098",
+    "perf-period-spring",
+    "seed-attendance",
+    "{{me}}",
+    10,
+    "Planned the weekend hike",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-172.5 days','-26 minutes'), ?)",
+   "params": [
+    "perf-award-099",
+    "perf-period-spring",
+    "perf-cat-scholarship",
+    "{{child}}",
+    3,
+    "Helped a friend move",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-176 days','-63 minutes'), ?)",
+   "params": [
+    "perf-award-100",
+    "perf-period-spring",
+    "perf-cat-kindness",
+    "{{partner}}",
+    15,
+    "Top marks on the spelling test",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-179.5 days','-100 minutes'), ?)",
+   "params": [
+    "perf-award-101",
+    "perf-period-spring",
+    "seed-leadership",
+    "{{me}}",
+    5,
+    "Set the table every night this week",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-183 days','-137 minutes'), ?)",
+   "params": [
+    "perf-award-102",
+    "perf-period-spring",
+    "seed-volunteering",
+    "{{child}}",
+    8,
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-186.5 days','-174 minutes'), ?)",
+   "params": [
+    "perf-award-103",
+    "perf-period-spring",
+    "seed-service",
+    "{{partner}}",
+    20,
+    "Helped with the science fair board",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-190 days','-211 minutes'), ?)",
+   "params": [
+    "perf-award-104",
+    "perf-period-spring",
+    "seed-attendance",
+    "{{child2}}",
+    10,
+    "Ran the bake sale table",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-193.5 days','-248 minutes'), ?)",
+   "params": [
+    "perf-award-105",
+    "perf-period-spring",
+    "perf-cat-scholarship",
+    "{{child}}",
+    5,
+    "Read to little sister before bed",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-197 days','-285 minutes'), ?)",
+   "params": [
+    "perf-award-106",
+    "perf-period-spring",
+    "perf-cat-kindness",
+    "{{partner}}",
+    12,
+    "Finished the book report early",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-200.5 days','-322 minutes'), ?)",
+   "params": [
+    "perf-award-107",
+    "perf-period-spring",
+    "seed-leadership",
+    "{{child2}}",
+    2,
+    "Cleared the gutters with grandpa",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-204 days','-359 minutes'), ?)",
+   "params": [
+    "perf-award-108",
+    "perf-period-spring",
+    "seed-volunteering",
+    "{{adult2}}",
+    25,
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-207.5 days','-396 minutes'), ?)",
+   "params": [
+    "perf-award-109",
+    "perf-period-spring",
+    "seed-service",
+    "{{partner}}",
+    5,
+    "Perfect attendance at practice",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-211 days','-433 minutes'), ?)",
+   "params": [
+    "perf-award-110",
+    "perf-period-spring",
+    "seed-attendance",
+    "{{child2}}",
+    10,
+    "Tutored a classmate in maths",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-214.5 days','-470 minutes'), ?)",
+   "params": [
+    "perf-award-111",
+    "perf-period-spring",
+    "perf-cat-scholarship",
+    "{{adult2}}",
+    3,
+    "Cooked dinner for everyone",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-218 days','-507 minutes'), ?)",
+   "params": [
+    "perf-award-112",
+    "perf-period-spring",
+    "perf-cat-kindness",
+    "{{me}}",
+    15,
+    "Shovelled the neighbour's driveway",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-221.5 days','-544 minutes'), ?)",
+   "params": [
+    "perf-award-113",
+    "perf-period-spring",
+    "seed-leadership",
+    "{{child2}}",
+    5,
+    "Led the family meeting",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-225 days','-581 minutes'), ?)",
+   "params": [
+    "perf-award-114",
+    "perf-period-spring",
+    "seed-volunteering",
+    "{{adult2}}",
+    8,
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-228.5 days','-18 minutes'), ?)",
+   "params": [
+    "perf-award-115",
+    "perf-period-spring",
+    "seed-service",
+    "{{me}}",
+    20,
+    "Stayed late to stack chairs",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-232 days','-55 minutes'), ?)",
+   "params": [
+    "perf-award-116",
+    "perf-period-spring",
+    "seed-attendance",
+    "{{child}}",
+    10,
+    "Wrote thank-you cards",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-235.5 days','-92 minutes'), ?)",
+   "params": [
+    "perf-award-117",
+    "perf-period-spring",
+    "perf-cat-scholarship",
+    "{{adult2}}",
+    5,
+    "Fixed the squeaky gate",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-239 days','-129 minutes'), ?)",
+   "params": [
+    "perf-award-118",
+    "perf-period-spring",
+    "perf-cat-kindness",
+    "{{me}}",
+    12,
+    "Planned the weekend hike",
+    "{{partner}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-242.5 days','-166 minutes'), ?)",
+   "params": [
+    "perf-award-119",
+    "perf-period-spring",
+    "seed-leadership",
+    "{{child}}",
+    2,
+    "Helped a friend move",
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, awarded_by, awarded_at, visibility) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-246 days','-203 minutes'), ?)",
+   "params": [
+    "perf-award-120",
+    "perf-period-spring",
+    "seed-volunteering",
+    "{{partner}}",
+    25,
+    "{{me}}",
+    "everyone"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility, source_event_id) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-4 days','-90 minutes'), ?, ?)",
+   "params": [
+    "perf-award-auto-1",
+    "perf-period-fall",
+    "automation",
+    "{{me}}",
+    7,
+    "7 day streak: Morning run",
+    "automation",
+    "everyone",
+    "perf-evt-1"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility, source_event_id) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-1 days','-90 minutes'), ?, ?)",
+   "params": [
+    "perf-award-auto-2",
+    "perf-period-fall",
+    "automation",
+    "{{child}}",
+    3,
+    "Chore completed",
+    "automation",
+    "everyone",
+    "perf-evt-2"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility, source_event_id) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-9 days','-90 minutes'), ?, ?)",
+   "params": [
+    "perf-award-auto-3",
+    "perf-period-fall",
+    "automation",
+    "{{child2}}",
+    5,
+    "Finished a book",
+    "automation",
+    "everyone",
+    "perf-evt-3"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility, source_event_id) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-90 minutes'), ?, ?)",
+   "params": [
+    "perf-award-auto-4",
+    "perf-period-fall",
+    "automation",
+    "{{child}}",
+    14,
+    "14 day streak: Piano practice",
+    "automation",
+    "everyone",
+    "perf-evt-4"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at, visibility, source_event_id) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-2 days','-90 minutes'), ?, ?)",
+   "params": [
+    "perf-award-auto-5",
+    "perf-period-fall",
+    "automation",
+    "{{me}}",
+    1,
+    "Task completed",
+    "automation",
+    "everyone",
+    "perf-evt-5"
+   ]
+  }
+ ]
+}

@@ -533,14 +533,23 @@ async function init() {
     await loadMembers();
     loadDemoData();
   } else {
-    await Promise.all([loadMembers(), loadGroups(), loadSettings(), loadPeriods(), loadCategories()]);
+    // The all-awards read is asked for with the first wave, ahead of the
+    // category seed below: the hub answers it from the document, and a write
+    // posted first would throw that answer away. Its rows are enriched only
+    // once periods and categories are in hand.
+    const [allAwardRows] = await Promise.all([fetchAllAwardRows(), loadMembers(), loadGroups(), loadSettings(), loadPeriods(), loadCategories()]);
     activePeriod = periods.find(p => p.is_active === 1) ?? null;
     selectedPeriodId = activePeriod?.id ?? periods[0]?.id ?? null;
     if (categories.length === 0 && amIOfficer()) await seedDefaultCategories();
-    await Promise.all([
-      loadAwardsForPeriod(selectedPeriodId),
-      loadAllAwards(),
-    ]);
+    allAwards = allAwardRows.map(enrichAward);
+    // The all-awards read is capped. Under the cap it holds every award, in
+    // the order the period read uses, so the period's awards are already here
+    // and asking for them again was a second wait on every open.
+    if (allAwardRows.length < ALL_AWARDS_LIMIT) {
+      awards = allAwards.filter(a => a.period_id === selectedPeriodId);
+    } else {
+      await loadAwardsForPeriod(selectedPeriodId);
+    }
   }
 
   // Admin tab is visible to officers (who manage awards) and to admins (who
@@ -613,13 +622,18 @@ async function loadAwardsForPeriod(periodId) {
   awards = (rows ?? []).map(enrichAward);
 }
 
-async function loadAllAwards() {
+const ALL_AWARDS_LIMIT = 2000; // the LIMIT in fetchAllAwardRows, which must stay a literal for the preload
+async function fetchAllAwardRows() {
   const { rows } = await db(
     `SELECT * FROM app_points_recognition__pr_awards
      ORDER BY awarded_at DESC
      LIMIT 2000`
   );
-  allAwards = (rows ?? []).map(enrichAward);
+  return rows ?? [];
+}
+
+async function loadAllAwards() {
+  allAwards = (await fetchAllAwardRows()).map(enrichAward);
 }
 
 // Seeding is idempotent through the PRIMARY KEY, not through the UNIQUE index
