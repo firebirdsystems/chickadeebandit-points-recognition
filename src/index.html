@@ -918,7 +918,7 @@ window.saveOfficersConfig = async function() {
     renderAdmin();
     renderOfficersNotice();
     showToast("Officers group updated");
-  } catch (e) { showToast(e.message ?? "Save failed"); }
+  } catch (e) { console.error(e); showToast("Couldn’t save the officers group — try again."); }
 };
 
 function renderAdminCategories() {
