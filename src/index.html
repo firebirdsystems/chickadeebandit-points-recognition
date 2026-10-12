@@ -342,6 +342,9 @@
       background: var(--surface, var(--card, #fff)); color: var(--text, inherit);
     }
     .search-input:focus { outline: none; border-color: var(--accent, #6366f1); }
+    .load-error { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; background: var(--hub-tint-danger, #fee2e2); color: var(--hub-tint-danger-fg, #b91c1c); font-size: 0.9rem; display: flex; gap: 10px; align-items: center; justify-content: space-between; }
+    .load-error-retry { background: none; border: 1px solid currentColor; border-radius: 8px; padding: 5px 10px; font: inherit; font-weight: 600; color: inherit; cursor: pointer; flex-shrink: 0; }
+    .load-error[hidden] { display: none; }
   </style>
 </head>
 <body>
@@ -355,6 +358,8 @@
   <button onclick="switchTab('mypoints')">My Points</button>
   <button id="admin-tab-btn" style="display:none" onclick="switchTab('admin')">Admin</button>
 </nav>
+
+<div id="load-error" class="load-error" data-testid="load-error" role="alert" style="margin:20px 20px 0" hidden><span>Couldn’t load the points.</span> <button type="button" class="load-error-retry" data-testid="load-retry">Try again</button></div>
 
 <!-- ── Leaderboard tab ── -->
 <div id="view-leaderboard" class="view active">
@@ -473,7 +478,9 @@ async function db(sql, params = []) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ sql, params }),
   });
-  return res.json();
+  const json = await res.json().catch(() => null);
+  if (!res.ok || !json || typeof json !== "object" || json.error) throw new Error(json?.error || "Couldn’t reach the hub. Try again.");
+  return json;
 }
 
 // Atomic multi-statement form of /api/db. Deleting a category also deletes the
@@ -488,8 +495,8 @@ async function dbBatch(statements) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ statements }),
   });
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok || body.error) throw new Error(body?.error ?? `batch failed (${res.status})`);
+  const body = await res.json().catch(() => null);
+  if (!res.ok || !body || typeof body !== "object" || body.error) throw new Error(body?.error ?? `batch failed (${res.status})`);
   return body.results ?? [];
 }
 
@@ -528,35 +535,45 @@ function loadDemoData() {
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────────
+// Set when the first load failed, so the page says so instead of reading as
+// empty; cleared when "Try again" gets through.
+let loadFailed = false;
 async function init() {
+  loadFailed = false;
   if (!DB) {
-    await loadMembers();
+    await loadMembers().catch(() => {});
     loadDemoData();
   } else {
     // The all-awards read is asked for with the first wave, ahead of the
     // category seed below: the hub answers it from the document, and a write
     // posted first would throw that answer away. Its rows are enriched only
     // once periods and categories are in hand.
-    const [allAwardRows] = await Promise.all([fetchAllAwardRows(), loadMembers(), loadGroups(), loadSettings(), loadPeriods(), loadCategories()]);
-    activePeriod = periods.find(p => p.is_active === 1) ?? null;
-    selectedPeriodId = activePeriod?.id ?? periods[0]?.id ?? null;
-    if (categories.length === 0 && amIOfficer()) await seedDefaultCategories();
-    allAwards = allAwardRows.map(enrichAward);
-    // The all-awards read is capped. Under the cap it holds every award, in
-    // the order the period read uses, so the period's awards are already here
-    // and asking for them again was a second wait on every open.
-    if (allAwardRows.length < ALL_AWARDS_LIMIT) {
-      awards = allAwards.filter(a => a.period_id === selectedPeriodId);
-    } else {
-      await loadAwardsForPeriod(selectedPeriodId);
+    try {
+      const [allAwardRows] = await Promise.all([fetchAllAwardRows(), loadMembers(), loadGroups(), loadSettings(), loadPeriods(), loadCategories()]);
+      activePeriod = periods.find(p => p.is_active === 1) ?? null;
+      selectedPeriodId = activePeriod?.id ?? periods[0]?.id ?? null;
+      // Best-effort: the page works without the starter categories.
+      if (categories.length === 0 && amIOfficer()) await seedDefaultCategories().catch(() => {});
+      allAwards = allAwardRows.map(enrichAward);
+      // The all-awards read is capped. Under the cap it holds every award, in
+      // the order the period read uses, so the period's awards are already here
+      // and asking for them again was a second wait on every open.
+      if (allAwardRows.length < ALL_AWARDS_LIMIT) {
+        awards = allAwards.filter(a => a.period_id === selectedPeriodId);
+      } else {
+        await loadAwardsForPeriod(selectedPeriodId);
+      }
+    } catch {
+      loadFailed = true;
     }
   }
 
   // Admin tab is visible to officers (who manage awards) and to admins (who
   // configure which group the officers are — the bootstrap).
-  if (amIOfficer() || IS_ADMIN) {
-    document.getElementById("admin-tab-btn").style.display = "";
-  }
+  // Not after a failed load: the tab would offer to set up periods, categories
+  // and the officers group over ones the page could not read.
+  document.getElementById("admin-tab-btn").style.display = !loadFailed && (amIOfficer() || IS_ADMIN) ? "" : "none";
+  document.getElementById("load-error").hidden = !loadFailed;
 
   renderPeriodSelect();
   renderCategorySelect();
@@ -566,27 +583,33 @@ async function init() {
 
 async function loadGroups() {
   if (!CONTEXT) return;
-  try {
-    const res = await fetch(`${CONTEXT}?keys=family.groups`);
-    groups = ((await res.json())["family.groups"]) ?? [];
-  } catch { groups = []; }
+  groups = (await readContext("family.groups"))["family.groups"] ?? [];
+}
+
+// Throws when the context cannot be read, so init() counts it as a failed
+// load: no groups reads as "nobody is an officer", no members as an empty
+// leaderboard.
+async function readContext(keys) {
+  const res = await fetch(`${CONTEXT}?keys=${keys}`);
+  const json = await res.json().catch(() => null);
+  if (!res.ok || !json || typeof json !== "object" || json.error) throw new Error("Couldn’t reach the hub. Try again.");
+  // A 200 can still name a key the hub failed to read: that is a failed read too.
+  if (Array.isArray(json.$errors) && keys.split(",").some(k => json.$errors.includes(k))) throw new Error("Couldn’t reach the hub. Try again.");
+  return json;
 }
 
 async function loadSettings() {
   if (!DB) return;
-  try {
-    const { rows } = await db("SELECT value FROM app_points_recognition__pr_settings WHERE key = 'officers_group_id'");
-    officersGroupId = rows?.[0]?.value ?? "";
-  } catch { officersGroupId = ""; }
+  // A failed read throws (init() shows the banner): "no officers group" is
+  // only said of a read that answered.
+  const { rows } = await db("SELECT value FROM app_points_recognition__pr_settings WHERE key = 'officers_group_id'");
+  officersGroupId = rows?.[0]?.value ?? "";
 }
 
 // ── Members ────────────────────────────────────────────────────────────────────
 async function loadMembers() {
   if (!CONTEXT) return;
-  try {
-    const res = await fetch(`${CONTEXT}?keys=family.members`);
-    members = ((await res.json())["family.members"]) ?? [];
-  } catch { members = []; }
+  members = (await readContext("family.members"))["family.members"] ?? [];
 }
 
 // ── DB loaders ─────────────────────────────────────────────────────────────────
@@ -701,7 +724,12 @@ function renderCategorySelect() {
 window.onPeriodChange = async function() {
   selectedPeriodId = document.getElementById("period-select").value || null;
   if (DB) {
-    await loadAwardsForPeriod(selectedPeriodId);
+    try {
+      await loadAwardsForPeriod(selectedPeriodId);
+    } catch {
+      awards = [];
+      showToast("Couldn’t load that period. Try again.");
+    }
   } else {
     awards = allAwards.filter(a => a.period_id === selectedPeriodId);
   }
@@ -711,6 +739,8 @@ window.onPeriodChange = async function() {
 function renderLeaderboard() {
   const categoryId = document.getElementById("category-select").value || null;
   const list = document.getElementById("leaderboard-list");
+
+  if (loadFailed) { list.innerHTML = ""; return; }
 
   if (!selectedPeriodId) {
     list.innerHTML = `<div class="empty-state"><div class="empty-icon">${chickadee("nest")}</div><p>No period selected. Leadership can create a period in the Admin tab.</p></div>`;
@@ -750,6 +780,7 @@ document.addEventListener("input", (e) => {
 
 function renderMyPoints() {
   const el = document.getElementById("mypoints-content");
+  if (loadFailed) { el.innerHTML = ""; return; }
   if (!ME) {
     el.innerHTML = `<div class="card"><div class="empty-state"><div class="empty-icon">${chickadee("perched")}</div><p>Sign in to see your points.</p></div></div>`;
     return;
@@ -844,7 +875,7 @@ function renderAdmin() {
 function renderOfficersNotice() {
   const el = document.getElementById("officers-notice");
   if (!el) return;
-  if (!DB || officersGroupId) { el.style.display = "none"; return; }
+  if (!DB || officersGroupId || loadFailed) { el.style.display = "none"; return; }
   el.style.display = "";
   el.innerHTML = IS_ADMIN
     ? `<p style="font-size:.9rem">No officers group configured yet — point awarding is disabled. Open the <b>Admin</b> tab to choose which member group acts as officers.</p>`
@@ -1128,7 +1159,9 @@ window.submitCategory = async function(existingId) {
     renderAdminCategories();
     showToast(`"${name}" updated`);
     try {
-      await db(`UPDATE app_points_recognition__pr_categories SET name = ?, icon = ? WHERE id = ?`, [name, icon, existingId]);
+      const res = await db(`UPDATE app_points_recognition__pr_categories SET name = ?, icon = ? WHERE id = ?`, [name, icon, existingId]);
+      // 200 with nothing changed: not an officer any more, or the category is gone.
+      if (res.changed === 0) throw new Error("nothing changed");
     } catch (e) {
       console.error(e);
       categories = prev;
@@ -1172,15 +1205,26 @@ window.deleteCategory = async function(id) {
 
   // Awards first, then the category, in one transactional batch — either the
   // whole deletion lands or none of it does.
-  await dbBatch([
-    { sql: `DELETE FROM app_points_recognition__pr_awards WHERE category_id = ?`, params: [id] },
-    { sql: `DELETE FROM app_points_recognition__pr_categories WHERE id = ?`, params: [id] },
-  ]);
-  await Promise.all([loadCategories(), loadAwardsForPeriod(selectedPeriodId), loadAllAwards()]);
+  let deleted = true;
+  try {
+    const results = await dbBatch([
+      { sql: `DELETE FROM app_points_recognition__pr_awards WHERE category_id = ?`, params: [id] },
+      { sql: `DELETE FROM app_points_recognition__pr_categories WHERE id = ?`, params: [id] },
+    ]);
+    // 200 with nothing changed: not an officer any more, or already deleted.
+    // The re-read below shows which.
+    if (results[1]?.changed === 0) deleted = false;
+    await Promise.all([loadCategories(), loadAwardsForPeriod(selectedPeriodId), loadAllAwards()]);
+  } catch (e) {
+    console.error(e);
+    showToast("Failed to delete category.");
+    return;
+  }
   renderCategorySelect();
   renderLeaderboard();
   renderAdmin();
-  showToast(`"${name}" deleted`);
+  if (deleted) showToast(`"${name}" deleted`);
+  else if (categories.some(c => c.id === id)) showToast("This category could not be deleted.");
 };
 
 // ── Period modals ──────────────────────────────────────────────────────────────
@@ -1227,6 +1271,7 @@ window.submitNewPeriod = async function() {
     console.error(e);
     btn.disabled = false;
     btn.textContent = "Create";
+    showToast("Failed to create period.");
   }
 };
 
@@ -1263,7 +1308,9 @@ window.submitRenamePeriod = async function(id) {
   showToast(`Period renamed to "${name}"`);
 
   try {
-    await db(`UPDATE app_points_recognition__pr_periods SET name = ? WHERE id = ?`, [name, id]);
+    const res = await db(`UPDATE app_points_recognition__pr_periods SET name = ? WHERE id = ?`, [name, id]);
+    // 200 with nothing changed: not an officer any more, or the period is gone.
+    if (res.changed === 0) throw new Error("nothing changed");
   } catch (e) {
     console.error(e);
     periods = prev;
@@ -1327,6 +1374,7 @@ window.submitClosePeriod = async function() {
     console.error(e);
     btn.disabled = false;
     btn.textContent = "Close & Start New";
+    showToast("Failed to close period.");
   }
 };
 
@@ -1366,11 +1414,17 @@ document.querySelectorAll(".tab-nav button").forEach(btn => {
 
 // ── Deep link ─────────────────────────────────────────────────────────────────
 function handleDeepLink() {
+  if (loadFailed) return;
   const tab = new URLSearchParams(window.location.search).get("tab");
   if (tab === "admin" && (amIOfficer() || IS_ADMIN)) switchTab("admin");
   else if (tab === "mypoints") switchTab("mypoints");
 }
 
+document.querySelector('[data-testid="load-retry"]').addEventListener("click", async () => {
+  await init();
+  if (currentTab === "mypoints") renderMyPoints();
+  handleDeepLink();
+});
 init().then(handleDeepLink);
 </script>
 </body>
