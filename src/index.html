@@ -421,7 +421,7 @@ import { esc, memberColor, initial, isAdult, hubConfirm, formatRelativeDate, sea
 // The page heading is static markup; its mark comes from the SDK.
 document.getElementById("page-glyph").innerHTML = glyph("star");
 document.getElementById("loading-bird").innerHTML = chickadee("perched", { size: 72 });
-import { buildLeaderboard, memberTotal, rankLabel, canAwardPoints as _canAwardPoints, searchableFields } from "./logic.js";
+import { buildLeaderboard, memberTotal, rankLabel, canAwardPoints as _canAwardPoints, searchableFields, outcomeUnknown, storedDiffers, SAVED_AS_FIRST, failureLine } from "./logic.js";
 
 const CONTEXT = window.__CONTEXT_URL ?? "";
 const DB      = window.__DB_URL      ?? "";
@@ -479,7 +479,7 @@ async function db(sql, params = []) {
     body: JSON.stringify({ sql, params }),
   });
   const json = await res.json().catch(() => null);
-  if (!res.ok || !json || typeof json !== "object" || json.error) throw new Error(json?.error || "Couldn’t reach the hub. Try again.");
+  if (!res.ok || !json || typeof json !== "object" || json.error) throw Object.assign(new Error(json?.error || "Couldn’t reach the hub. Try again."), { status: res.status, code: json?.code });
   return json;
 }
 
@@ -496,8 +496,16 @@ async function dbBatch(statements) {
     body: JSON.stringify({ statements }),
   });
   const body = await res.json().catch(() => null);
-  if (!res.ok || !body || typeof body !== "object" || body.error) throw new Error(body?.error ?? `batch failed (${res.status})`);
+  if (!res.ok || !body || typeof body !== "object" || body.error) throw Object.assign(new Error(body?.error ?? `batch failed (${res.status})`), { status: res.status, code: typeof body?.code === "string" ? body.code : undefined });
   return body.results ?? [];
+}
+
+// After a write that changed nothing: whether the row is still there
+// (true / false), or null when the re-read itself failed. failureLine turns
+// that into "removed" or the permission line.
+async function rowFound(table, id) {
+  try { return !!(await db(`SELECT id FROM ${table} WHERE id = ?`, [id])).rows?.length; }
+  catch (e) { console.error(e); return null; }
 }
 
 // ── Demo data ──────────────────────────────────────────────────────────────────
@@ -911,14 +919,14 @@ window.saveOfficersConfig = async function() {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ key: "officers_group_id", value: groupId }),
     });
-    if (!res.ok) { let m = "Save failed"; try { m = (await res.json()).error ?? m; } catch {} throw new Error(m); }
+    if (!res.ok) { const body = await res.json().catch(() => null); throw Object.assign(new Error(body?.error ?? "Save failed"), { status: res.status, code: typeof body?.code === "string" ? body.code : undefined }); }
     officersGroupId = groupId;
     closeModal();
     document.getElementById("admin-tab-btn").style.display = (amIOfficer() || IS_ADMIN) ? "" : "none";
     renderAdmin();
     renderOfficersNotice();
     showToast("Officers group updated");
-  } catch (e) { console.error(e); showToast("Couldn’t save the officers group — try again."); }
+  } catch (e) { console.error(e); showToast(failureLine(e, { action: "save the officers group", thing: "officers group" })); }
 };
 
 function renderAdminCategories() {
@@ -1054,53 +1062,85 @@ window.submitAward = async function() {
   if (!categoryId) { document.getElementById("f-category").focus(); return; }
   if (!pointsVal || pointsVal < 1 || pointsVal > 1000) { document.getElementById("f-points").focus(); return; }
 
-  const id     = crypto.randomUUID();
+  // The id is the open form's, minted on its first send and sent on every
+  // retry: a try whose answer was lost may have stored the award, and a
+  // second press must find it rather than award (and announce) it twice.
+  // The form stays open until the hub has the row.
+  const host = modalEl;
+  const btn = document.getElementById("award-submit-btn");
+  if (btn?.disabled) return;
+  const id     = host ? (host.dataset.rowId ||= crypto.randomUUID()) : crypto.randomUUID();
   const now    = new Date().toISOString();
-  const member = members.find(m => m.id === memberId);
-  const cat    = categories.find(c => c.id === categoryId);
-
-  // Optimistic: add award to local state and render immediately
-  const optimistic = {
-    id, period_id: activePeriod.id, category_id: categoryId,
-    member_id: memberId, points: pointsVal, note,
-    awarded_by: ME?.id ?? "", awarded_at: now,
-    category_name: cat?.name ?? "", category_icon: cat?.icon ?? "⭐",
-  };
-  awards = [optimistic, ...awards];
-  allAwards = [{ ...optimistic, period_name: activePeriod.name }, ...allAwards];
-  closeModal();
-  renderLeaderboard();
-  showToast(`+${pointsVal} pts awarded to ${member?.name ?? "member"}!`);
+  const typed  = { period_id: activePeriod.id, category_id: categoryId, member_id: memberId, points: pointsVal, note };
+  let stored   = { id, ...typed, awarded_by: ME?.id ?? "", awarded_at: now };
+  let savedNote = "";
+  if (btn) btn.disabled = true;
 
   try {
-    await db(
-      `INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, activePeriod.id, categoryId, memberId, pointsVal, note, ME?.id ?? "", now]
-    );
-    // Fire-and-forget — don't block the UI on notifications
-    notify(
-      `${pointsVal} pts awarded to ${member?.name ?? "a member"}`,
-      `${cat?.icon ?? "⭐"} ${cat?.name ?? "Points"}: ${note || "No note"}`
-    ).catch(() => {});
-    // No activity-feed write. /api/activity accepts only the hub's own closed
-    // ActivityType union (CALLER_ALLOWED_ACTIVITY_TYPES); "points_awarded" is
-    // not in it, so the entry this used to POST was refused 403 on every award
-    // and no household ever saw it — a fetch does not reject on 4xx, so the
-    // .catch() hid it. The event below is the sink that works.
-    await publishEvent("recognition.award_given", id, {
-      member_id: memberId,
-      points: pointsVal,
-      category: cat?.name ?? "",
-      period_id: activePeriod.id,
-    });
+    try {
+      await db(
+        `INSERT INTO app_points_recognition__pr_awards (id, period_id, category_id, member_id, points, note, awarded_by, awarded_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [id, typed.period_id, categoryId, memberId, pointsVal, note, ME?.id ?? "", now]
+      );
+    } catch (e) {
+      // Unknown outcome: read the award back by the pinned id. Found means an
+      // earlier try landed and its success path never ran, so it runs now,
+      // once. Not found, or the read failed: the award fails, the id stays pinned.
+      if (!outcomeUnknown(e)) throw e;
+      let row = null;
+      try { row = (await db("SELECT id, period_id, category_id, member_id, points, note, awarded_by, awarded_at FROM app_points_recognition__pr_awards WHERE id = ?", [id])).rows?.[0] ?? null; }
+      catch (readErr) {
+        // The id is ours: with the read-back failed, a UNIQUE answer may be this
+        // form's own first try, so nothing is known — "try again", not "already exists".
+        console.error(readErr);
+        throw new Error("award outcome unknown", { cause: e });
+      }
+      if (!row) throw e;
+      console.error(e);
+      // Edited since that first try: what was stored is kept, and said so.
+      if (storedDiffers(row, typed)) savedNote = SAVED_AS_FIRST;
+      stored = { ...row, points: Number(row.points) || 0 };
+    }
   } catch (e) {
     console.error(e);
-    awards    = awards.filter(a => a.id !== id);
-    allAwards = allAwards.filter(a => a.id !== id);
-    renderLeaderboard();
-    showToast("Failed to save award — please try again.");
+    if (btn?.isConnected) btn.disabled = false;
+    showToast(failureLine(e, { action: "save the award", thing: "award" }));
+    return;
   }
+
+  if (host) delete host.dataset.rowId;
+  const member = members.find(m => m.id === stored.member_id);
+  const cat    = categories.find(c => c.id === stored.category_id);
+  const period = periods.find(p => p.id === stored.period_id);
+  const award = {
+    ...stored,
+    category_name: cat?.name ?? "", category_icon: cat?.icon ?? "⭐",
+  };
+  awards = [award, ...awards.filter(a => a.id !== id)];
+  allAwards = [{ ...award, period_name: period?.name ?? activePeriod?.name ?? "" }, ...allAwards.filter(a => a.id !== id)];
+  if (modalEl === host) closeModal();
+  renderLeaderboard();
+  showToast(savedNote || `+${stored.points} pts awarded to ${member?.name ?? "member"}!`);
+
+  // Follow-on work runs only once the award is known to be stored, and its
+  // failure never makes the award look unsaved.
+  // Fire-and-forget — don't block the UI on notifications
+  notify(
+    `${stored.points} pts awarded to ${member?.name ?? "a member"}`,
+    `${cat?.icon ?? "⭐"} ${cat?.name ?? "Points"}: ${stored.note || "No note"}`
+  ).catch((e) => console.error(e));
+  // No activity-feed write. /api/activity accepts only the hub's own closed
+  // ActivityType union (CALLER_ALLOWED_ACTIVITY_TYPES); "points_awarded" is
+  // not in it, so the entry this used to POST was refused 403 on every award
+  // and no household ever saw it — a fetch does not reject on 4xx, so the
+  // .catch() hid it. The event below is the sink that works.
+  await publishEvent("recognition.award_given", id, {
+    member_id: stored.member_id,
+    points: stored.points,
+    category: cat?.name ?? "",
+    period_id: stored.period_id,
+  });
 };
 
 async function notify(title, body) {
@@ -1161,13 +1201,13 @@ window.submitCategory = async function(existingId) {
     try {
       const res = await db(`UPDATE app_points_recognition__pr_categories SET name = ?, icon = ? WHERE id = ?`, [name, icon, existingId]);
       // 200 with nothing changed: not an officer any more, or the category is gone.
-      if (res.changed === 0) throw new Error("nothing changed");
+      if (res.changed === 0) throw Object.assign(new Error("nothing changed"), { found: await rowFound("app_points_recognition__pr_categories", existingId) });
     } catch (e) {
       console.error(e);
       categories = prev;
       renderCategorySelect();
       renderAdminCategories();
-      showToast("Failed to save category.");
+      showToast(failureLine(e, { action: "save the category", thing: "category", found: e?.found }));
     }
   } else {
     const id = crypto.randomUUID();
@@ -1188,7 +1228,7 @@ window.submitCategory = async function(existingId) {
       categories = categories.filter(c => c.id !== id);
       renderCategorySelect();
       renderAdminCategories();
-      showToast("Failed to create category.");
+      showToast(failureLine(e, { action: "create the category", thing: "category" }));
     }
   }
 };
@@ -1214,17 +1254,25 @@ window.deleteCategory = async function(id) {
     // 200 with nothing changed: not an officer any more, or already deleted.
     // The re-read below shows which.
     if (results[1]?.changed === 0) deleted = false;
+  } catch (e) {
+    console.error(e);
+    showToast(failureLine(e, { action: "delete the category", thing: "category" }));
+    return;
+  }
+  // The batch committed: a failed reload is logged, not reported as a failed delete.
+  let reloaded = true;
+  try {
     await Promise.all([loadCategories(), loadAwardsForPeriod(selectedPeriodId), loadAllAwards()]);
   } catch (e) {
     console.error(e);
-    showToast("Failed to delete category.");
-    return;
+    reloaded = false;
+    if (deleted) categories = categories.filter(c => c.id !== id);
   }
   renderCategorySelect();
   renderLeaderboard();
   renderAdmin();
   if (deleted) showToast(`"${name}" deleted`);
-  else if (categories.some(c => c.id === id)) showToast("This category could not be deleted.");
+  else showToast(failureLine(null, { action: "delete the category", thing: "category", found: reloaded ? categories.some(c => c.id === id) : null }));
 };
 
 // ── Period modals ──────────────────────────────────────────────────────────────
@@ -1271,7 +1319,7 @@ window.submitNewPeriod = async function() {
     console.error(e);
     btn.disabled = false;
     btn.textContent = "Create";
-    showToast("Failed to create period.");
+    showToast(failureLine(e, { action: "create the period", thing: "period" }));
   }
 };
 
@@ -1310,14 +1358,14 @@ window.submitRenamePeriod = async function(id) {
   try {
     const res = await db(`UPDATE app_points_recognition__pr_periods SET name = ? WHERE id = ?`, [name, id]);
     // 200 with nothing changed: not an officer any more, or the period is gone.
-    if (res.changed === 0) throw new Error("nothing changed");
+    if (res.changed === 0) throw Object.assign(new Error("nothing changed"), { found: await rowFound("app_points_recognition__pr_periods", id) });
   } catch (e) {
     console.error(e);
     periods = prev;
     activePeriod = periods.find(p => p.is_active === 1) ?? null;
     renderPeriodSelect();
     renderAdmin();
-    showToast("Failed to rename period.");
+    showToast(failureLine(e, { action: "rename the period", thing: "period", found: e?.found }));
   }
 };
 
@@ -1350,32 +1398,74 @@ window.submitClosePeriod = async function() {
   btn.disabled = true;
   btn.textContent = "Saving…";
 
+  const now = new Date().toISOString();
+  // The new period's id is the dialog's, minted on its first press and sent on
+  // every retry: a try whose answer was lost may have closed and started, and a
+  // second press must find that rather than read the old period's guard as a refusal.
+  const newId = (btn.dataset.newId ||= crypto.randomUUID());
+  let startedName = newName;
   try {
-    const now = new Date().toISOString();
-    // INSERT the new period first — if it fails, the old period stays active.
-    // If the UPDATE then fails we have two active periods, which is recoverable;
-    // the reverse order would leave no active period at all.
-    await db(
-      `INSERT INTO app_points_recognition__pr_periods (id, name, started_at, is_active, created_at, created_by)
-       VALUES (?, ?, ?, 1, ?, ?)`,
-      [crypto.randomUUID(), newName, now, now, ME?.id ?? ""]
-    );
-    await db(`UPDATE app_points_recognition__pr_periods SET is_active = 0, closed_at = ? WHERE id = ?`, [now, oldId]);
-    await loadPeriods();
-    activePeriod = periods.find(p => p.is_active === 1) ?? null;
-    selectedPeriodId = activePeriod?.id ?? null;
-    await Promise.all([loadAwardsForPeriod(selectedPeriodId), loadAllAwards()]);
-    closeModal();
-    renderPeriodSelect();
-    renderLeaderboard();
-    renderAdmin();
-    showToast(`"${oldName}" closed · "${newName}" started`);
+    // One transactional batch: the old period closes and the new one starts
+    // together, or neither does. `requireChanges` on the guarded UPDATE makes a
+    // period that is already closed (or that this member may not change) roll
+    // the whole batch back as a 409 instead of leaving two active periods.
+    await dbBatch([
+      { sql: `UPDATE app_points_recognition__pr_periods SET is_active = 0, closed_at = ? WHERE id = ? AND is_active = 1`, params: [now, oldId], requireChanges: true },
+      { sql: `INSERT INTO app_points_recognition__pr_periods (id, name, started_at, is_active, created_at, created_by)
+       VALUES (?, ?, ?, 1, ?, ?)`, params: [newId, newName, now, now, ME?.id ?? ""] },
+    ]);
   } catch (e) {
     console.error(e);
-    btn.disabled = false;
-    btn.textContent = "Close & Start New";
-    showToast("Failed to close period.");
+    // A 409 or an unknown outcome may be an earlier try that landed (its retry
+    // meets the old period already closed): read the new period back by its
+    // pinned id first. Found: the success path below runs, once.
+    let landed = null, readFailed = false;
+    if (e?.status === 409 || outcomeUnknown(e)) {
+      try { landed = (await db(`SELECT name FROM app_points_recognition__pr_periods WHERE id = ?`, [newId])).rows?.[0] ?? null; }
+      catch (readErr) { console.error(readErr); readFailed = true; }
+    }
+    if (landed) startedName = landed.name ?? newName;
+    else {
+      btn.disabled = false;
+      btn.textContent = "Close & Start New";
+      if (readFailed) { showToast(failureLine(null, { action: "close the period", thing: "period" })); return; }
+      // A 409 is the UPDATE's guard: re-read the old period to say why. Gone:
+      // removed. Still active: the row policy refused it. Already closed: someone
+      // else closed it first.
+      let found, guarded = false;
+      if (e?.status === 409) {
+        try {
+          const row = (await db(`SELECT is_active FROM app_points_recognition__pr_periods WHERE id = ?`, [oldId])).rows?.[0];
+          found = !!row;
+          guarded = !!row && Number(row.is_active) !== 1;
+        } catch (readErr) { console.error(readErr); found = null; }
+      }
+      showToast(failureLine(e, { action: "close the period", thing: "period", found, guarded }));
+      return;
+    }
   }
+
+  // The batch is stored: a failed reload is logged, not reported as a failed close.
+  try {
+    await loadPeriods();
+  } catch (e) {
+    console.error(e);
+    periods = [
+      { id: newId, name: startedName, started_at: now, is_active: 1, created_at: now, created_by: ME?.id ?? "" },
+      ...periods.map(p => p.id === oldId ? { ...p, is_active: 0, closed_at: now } : p),
+    ];
+  }
+  activePeriod = periods.find(p => p.is_active === 1) ?? null;
+  selectedPeriodId = activePeriod?.id ?? null;
+  try {
+    await Promise.all([loadAwardsForPeriod(selectedPeriodId), loadAllAwards()]);
+  } catch (e) { console.error(e); }
+  closeModal();
+  renderPeriodSelect();
+  renderLeaderboard();
+  renderAdmin();
+  // Edited since that first try: what was stored is kept, and said so.
+  showToast(startedName !== newName ? SAVED_AS_FIRST : `"${oldName}" closed · "${newName}" started`);
 };
 
 // ── Modal helpers ──────────────────────────────────────────────────────────────
