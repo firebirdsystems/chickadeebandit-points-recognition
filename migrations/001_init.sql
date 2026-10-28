@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS app_points_recognition__pr_periods (
-  id           TEXT PRIMARY KEY,
+  id           TEXT NOT NULL PRIMARY KEY,
   name         TEXT NOT NULL,
   started_at   TEXT NOT NULL,
   closed_at    TEXT,
@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS app_points_recognition__pr_periods (
 );
 
 CREATE TABLE IF NOT EXISTS app_points_recognition__pr_categories (
-  id           TEXT PRIMARY KEY,
+  id           TEXT NOT NULL PRIMARY KEY,
   name         TEXT NOT NULL,
   icon         TEXT NOT NULL DEFAULT '⭐',
   description  TEXT NOT NULL DEFAULT '',
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS app_points_recognition__pr_categories (
 );
 
 CREATE TABLE IF NOT EXISTS app_points_recognition__pr_awards (
-  id           TEXT PRIMARY KEY,
+  id           TEXT NOT NULL PRIMARY KEY,
   period_id    TEXT NOT NULL,
   category_id  TEXT NOT NULL,
   member_id    TEXT NOT NULL,
